@@ -55,3 +55,6 @@ backend/db.sqlite3
 backend/staticfiles/
 backend/media/
 backend/.env
+# Removed React/Vite reference artifacts
+node_modules/
+package-lock.json

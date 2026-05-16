@@ -1,11 +1,11 @@
 {
-    "name": "mindrise_mobile",
-    "short_name": "mindrise_mobile",
+    "name": "MindRise",
+    "short_name": "MindRise",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "MindRise healthcare and mental wellness mobile application.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

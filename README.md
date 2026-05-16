@@ -1,6 +1,6 @@
 # MindRise Mobile
 
-Production-ready Flutter rebuild of the MindRise Figma mobile design. The original Figma-generated React/Vite files are kept under `src/` as reference only; the working application is the Flutter project in `lib/`.
+Production-ready Flutter mobile application for MindRise. The working application lives in `lib/`, with the Django REST backend in `backend/`.
 
 ## Stack
 
