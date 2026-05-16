@@ -74,7 +74,7 @@ Render will prompt for secrets such as `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, CO
 
 ```bash
 flutter pub get
-flutter run --dart-define=API_BASE_URL=https://your-django-host.com/api/v1
+flutter run --dart-define=API_BASE_URL=https://mindrise.onrender.com/api/v1
 ```
 
 For local development, copy `.env.example` values into your run configuration as `--dart-define` entries. Flutter does not load `.env` files automatically.

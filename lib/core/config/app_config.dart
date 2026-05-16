@@ -3,7 +3,7 @@ class AppConfig {
 
   static const apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'https://api.mindrise.example.com/api/v1',
+    defaultValue: 'https://mindrise.onrender.com/api/v1',
   );
 
   static const connectTimeout = Duration(
