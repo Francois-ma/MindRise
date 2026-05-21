@@ -1,4 +1,8 @@
-export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'https://mindrise-api.onrender.com/api/v1').replace(/\/$/, '');
+const configuredApiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://mindrise-api.onrender.com/api/v1';
+
+export const API_BASE_URL = configuredApiBaseUrl
+  .replace('https://mindrise.onrender.com', 'https://mindrise-api.onrender.com')
+  .replace(/\/$/, '');
 
 const corsHint = 'The browser could not reach MindRise API. Verify VITE_API_BASE_URL and add this website origin to CORS_ALLOWED_ORIGINS on Render.';
 
