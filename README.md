@@ -57,6 +57,25 @@ python manage.py runserver
 
 See `backend/README.md` for endpoint details.
 
+
+## React Website
+
+A multi-page React/Vite official website lives in `website/`. It presents MindRise as an organization and connects to the Django API for health checks, registration, email verification, public learning content, and crisis resources.
+
+```bash
+cd website
+npm install
+npm run dev
+```
+
+The local website runs at `http://localhost:5173`. Add this origin to the Render backend before testing API-backed flows in Chrome:
+
+```env
+CORS_ALLOWED_ORIGINS=http://localhost:5173
+```
+
+For production, set `VITE_API_BASE_URL` to the deployed API URL and add the deployed website domain to `CORS_ALLOWED_ORIGINS`.
+
 ## Deploy Backend On Render
 
 The repository has a production Blueprint in `render.yaml`. In Render, create a new Blueprint from this repo. It will provision:
