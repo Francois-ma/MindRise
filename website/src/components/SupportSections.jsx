@@ -1,4 +1,5 @@
-﻿import { useEffect, useState } from 'react';
+﻿import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import { HandHeart, Loader2, MessageCircle, Phone, ShieldCheck, UsersRound } from 'lucide-react';
 import { fetchCrisisResources } from '../api';
 import { PageHero, SectionIntro } from './Layout';
@@ -31,7 +32,7 @@ export function SupportPathways() {
         <MessageCircle size={30} aria-hidden="true" />
         <h3>Safe spaces for dialogue</h3>
         <p>We encourage open conversations where young people can express what they feel, listen to others, and challenge stigma together.</p>
-        <a className="button button--light" href="/contact.html">Partner with us</a>
+        <Link className="button button--light" to="/contact">Partner with us</Link>
       </article>
       <article className="support-card">
         <UsersRound size={30} aria-hidden="true" />

@@ -1,16 +1,18 @@
-# MindRise Website
+﻿# MindRise Website
 
-Official multi-page React/Vite website for MindRise Wellness Initiative: a youth-driven mental health organization in Rwanda with the slogan "Rise Above, Speak Out." It is intentionally not a single-page application; each primary section has its own HTML entry and page bundle.
+Official React/Vite website for MindRise Wellness Initiative: a youth-driven mental health organization in Rwanda with the slogan "Rise Above, Speak Out."
 
-## Pages
+The frontend is now a React app with one `index.html` mount file and React Router routes. The visible website still has organization pages, but they are implemented as React components instead of separate HTML files.
 
-- `index.html` - initiative home and slogan
-- `about.html` - mission, belief, and approach
-- `programs.html` - awareness, school outreach, resources, dialogue spaces, early intervention, and media engagement
-- `resources.html` - backend-connected mental health literacy resources
-- `support.html` - safe spaces, community support, and crisis resources
-- `start.html` - backend-connected digital platform registration and email verification
-- `contact.html` - school, community, media, and institutional partnerships
+## React Routes
+
+- `/` - initiative home and slogan
+- `/about` - mission, belief, and approach
+- `/programs` - awareness, school outreach, resources, dialogue spaces, early intervention, and media engagement
+- `/resources` - backend-connected mental health literacy resources
+- `/support` - safe spaces, community support, and crisis resources
+- `/start` - backend-connected digital platform registration and email verification
+- `/contact` - school, community, media, and institutional partnerships
 
 ## Local development
 

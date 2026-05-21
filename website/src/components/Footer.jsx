@@ -1,4 +1,5 @@
-﻿import { ExternalLink, Mail, MapPin } from 'lucide-react';
+﻿import { Link } from 'react-router-dom';
+import { ExternalLink, Mail, MapPin } from 'lucide-react';
 import { API_BASE_URL } from '../api';
 import { logoUrl } from './siteConfig';
 
@@ -19,18 +20,18 @@ export function Footer() {
 
         <nav className="footer-column" aria-label="Organization links">
           <span>Organization</span>
-          <a href="/about.html">About MindRise</a>
-          <a href="/programs.html">Programs</a>
-          <a href="/resources.html">Resources</a>
-          <a href="/support.html">Support</a>
+          <Link to="/about">About MindRise</Link>
+          <Link to="/programs">Programs</Link>
+          <Link to="/resources">Resources</Link>
+          <Link to="/support">Support</Link>
         </nav>
 
         <nav className="footer-column" aria-label="Program links">
           <span>Focus Areas</span>
-          <a href="/programs.html">School outreach</a>
-          <a href="/programs.html">Awareness campaigns</a>
-          <a href="/programs.html">Community engagement</a>
-          <a href="/programs.html">Media education</a>
+          <Link to="/programs">School outreach</Link>
+          <Link to="/programs">Awareness campaigns</Link>
+          <Link to="/programs">Community engagement</Link>
+          <Link to="/programs">Media education</Link>
         </nav>
 
         <div className="footer-column footer-contact">

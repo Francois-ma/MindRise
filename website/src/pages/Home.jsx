@@ -1,11 +1,10 @@
-﻿import React, { useEffect, useState } from 'react';
-import { createRoot } from 'react-dom/client';
+﻿import { useEffect, useState } from 'react';
 import { fetchHealth } from '../api';
 import { Layout } from '../components/Layout';
 import { BeliefCallout, CommitmentStrip, HomeHero, WhatWeProvideSection, WhoWeAreSection } from '../components/HomeSections';
 import '../styles.css';
 
-function Home() {
+export function Home() {
   const [health, setHealth] = useState({ status: 'checking', message: 'Checking API connection' });
 
   useEffect(() => {
@@ -24,9 +23,3 @@ function Home() {
     </Layout>
   );
 }
-
-createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <Home />
-  </React.StrictMode>,
-);

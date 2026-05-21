@@ -1,10 +1,9 @@
-﻿import React from 'react';
-import { createRoot } from 'react-dom/client';
+﻿
 import { Layout } from '../components/Layout';
 import { StartAccountSection, StartHero } from '../components/StartSections';
 import '../styles.css';
 
-function Start() {
+export function Start() {
   return (
     <Layout active="start">
       <StartHero />
@@ -12,9 +11,3 @@ function Start() {
     </Layout>
   );
 }
-
-createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <Start />
-  </React.StrictMode>,
-);

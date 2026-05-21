@@ -1,4 +1,5 @@
-﻿import { Activity, ArrowRight, BookOpen, HeartPulse, Loader2, Megaphone, MessageCircle, Sparkles, UsersRound } from 'lucide-react';
+﻿import { Link } from 'react-router-dom';
+import { Activity, ArrowRight, BookOpen, HeartPulse, Loader2, Megaphone, MessageCircle, Sparkles, UsersRound } from 'lucide-react';
 import { PageHero, SectionIntro } from './Layout';
 import { ProgramCard, Stat } from './Cards';
 
@@ -10,8 +11,8 @@ export function HomeHero({ health }) {
       lead="A youth-driven mental health organization promoting emotional well-being, psychological resilience, and mental health literacy among young people and underserved communities in Rwanda."
     >
       <div className="hero-actions">
-        <a className="button button--primary" href="/programs.html"><span>Explore our work</span><ArrowRight size={18} aria-hidden="true" /></a>
-        <a className="button button--secondary" href="/about.html">Our story</a>
+        <Link className="button button--primary" to="/programs"><span>Explore our work</span><ArrowRight size={18} aria-hidden="true" /></Link>
+        <Link className="button button--secondary" to="/about">Our story</Link>
       </div>
       <div className={`api-pill api-pill--${health.status}`}>
         {health.status === 'checking' ? <Loader2 className="spin" size={16} aria-hidden="true" /> : <span aria-hidden="true" />}
