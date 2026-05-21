@@ -78,16 +78,15 @@ For production, set `VITE_API_BASE_URL` to the deployed API URL and add the depl
 
 ## Deploy Backend On Render
 
-The repository has a production Blueprint in `render.yaml`. In Render, create a new Blueprint from this repo. It will provision:
+The repository has a Render Blueprint in `render.yaml`. In Render, create a new Blueprint from this repo root. It will provision:
 
-- Django API web service running Gunicorn
-- Managed PostgreSQL
+- Free Django API web service running Gunicorn
+- Free managed PostgreSQL database
 - Pre-deploy migrations
 - Static collection through WhiteNoise
-- Persistent media disk for uploaded learning materials
 - Health checks at `/api/v1/health/`
 
-Render will prompt for secrets such as `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, CORS/CSRF origins, and optional AI provider credentials.
+Render will prompt for `RESEND_API_KEY`. The blueprint already includes the MindRise Vercel and local Chrome origins for CORS/CSRF testing. Free Render services are good for testing, but the web service sleeps when idle and the free database is not a long-term production database.
 
 ## Setup
 

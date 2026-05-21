@@ -69,9 +69,9 @@ Do not commit real database credentials. Put them only in environment variables 
 
 The repository includes a Render Blueprint at `render.yaml`. It creates:
 
-- `mindrise-api`: Python web service for Django/Gunicorn.
-- `mindrise-postgres`: managed Render PostgreSQL database.
-- A 1 GB persistent disk mounted at `/opt/render/project/src/backend/media` for admin-uploaded learning materials.
+- `mindrise-api`: free Python web service for Django/Gunicorn.
+- `mindrise-postgres`: free managed Render PostgreSQL database.
+- Ephemeral media storage at `/opt/render/project/src/backend/media` for testing uploads.
 - Path-safe media serving for uploaded learning materials through `SERVE_MEDIA_FILES=true`.
 - A pre-deploy migration command: `python manage.py migrate --noinput`.
 - A health check at `/api/v1/health/`.
@@ -81,13 +81,7 @@ Deploy steps:
 1. Push the repository to GitHub/GitLab/Bitbucket.
 2. In Render, choose `New` -> `Blueprint`.
 3. Select the repository and use the root `render.yaml`.
-4. Fill the prompted secret values:
-   - `RESEND_API_KEY`
-   - `RESEND_FROM_EMAIL`
-   - `RESEND_REPLY_TO_EMAIL`
-   - `CORS_ALLOWED_ORIGINS`
-   - `DJANGO_CSRF_TRUSTED_ORIGINS`
-   - Optional AI provider secrets if you switch away from local insights.
+4. Fill the prompted `RESEND_API_KEY` secret if you want signup verification emails to work.
 5. Deploy. Render runs the build script, collects static files, runs migrations, and starts Gunicorn.
 
 For mobile-only API use, `CORS_ALLOWED_ORIGINS` can stay empty. If you use Django Admin or a web client from a browser, set:
@@ -99,7 +93,7 @@ CORS_ALLOWED_ORIGINS=https://your-web-client.com
 
 The Blueprint uses Render's private PostgreSQL connection string, so `DATABASE_SSL_REQUIRE=false` is intentional there. If you connect to an external PostgreSQL database over the public internet, set `DATABASE_SSL_REQUIRE=true`.
 
-Render persistent disks are attached to a single service instance. If you scale the API horizontally, move learning material uploads to object storage such as S3/R2 and replace the local media serving route with that storage backend.
+The free Render web service uses an ephemeral filesystem, so uploaded learning materials can disappear after redeploys, restarts, or idle spin-downs. For production, upgrade the web service and attach a persistent disk or move uploads to object storage such as S3/R2.
 
 ## Main Endpoints
 
