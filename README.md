@@ -92,7 +92,7 @@ Render will prompt for `RESEND_API_KEY`. The blueprint already includes the Mind
 
 ```bash
 flutter pub get
-flutter run --dart-define=API_BASE_URL=https://mindrise.onrender.com/api/v1
+flutter run --dart-define=API_BASE_URL=https://mindrise-api.onrender.com/api/v1
 ```
 
 For local development, copy `.env.example` values into your run configuration as `--dart-define` entries. Flutter does not load `.env` files automatically.

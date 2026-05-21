@@ -1,6 +1,6 @@
-﻿export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'https://mindrise.onrender.com/api/v1').replace(/\/$/, '');
+export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'https://mindrise-api.onrender.com/api/v1').replace(/\/$/, '');
 
-const corsHint = 'The browser could not reach MindRise API. Add this website origin to CORS_ALLOWED_ORIGINS on Render.';
+const corsHint = 'The browser could not reach MindRise API. Verify VITE_API_BASE_URL and add this website origin to CORS_ALLOWED_ORIGINS on Render.';
 
 export async function fetchHealth() {
   return request('/health/');

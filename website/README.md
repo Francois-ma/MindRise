@@ -1,4 +1,4 @@
-﻿# MindRise Website
+# MindRise Website
 
 Official React/Vite website for MindRise Wellness Initiative: a youth-driven mental health organization in Rwanda with the slogan "Rise Above, Speak Out."
 
@@ -25,7 +25,7 @@ The local website runs at `http://localhost:5173`.
 
 ## Backend configuration
 
-The default API is `https://mindrise.onrender.com/api/v1`. To override it, create `.env` from `.env.example` and set `VITE_API_BASE_URL`.
+The default API is `https://mindrise-api.onrender.com/api/v1`. To override it, create `.env` from `.env.example` and set `VITE_API_BASE_URL`.
 
 For browser testing, the backend must allow the website origin:
 
