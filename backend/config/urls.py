@@ -25,9 +25,24 @@ class HealthCheckView(APIView):
         return Response({"status": "ok"})
 
 
+class DebugCorsView(APIView):
+    """Debug endpoint to check CORS configuration"""
+    authentication_classes = []
+    permission_classes = []
+
+    def get(self, request):
+        return Response({
+            "CORS_ALLOWED_ORIGINS": settings.CORS_ALLOWED_ORIGINS,
+            "CORS_ALLOW_CREDENTIALS": settings.CORS_ALLOW_CREDENTIALS,
+            "DEBUG": settings.DEBUG,
+            "DJANGO_ENV": settings.DJANGO_ENV,
+        })
+
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/v1/health/", HealthCheckView.as_view(), name="health-check"),
+    path("api/v1/debug/cors/", DebugCorsView.as_view(), name="debug-cors"),
     path("api/v1/auth/", include("apps.accounts.urls")),
     path("api/v1/wellness/", include("apps.wellness.urls")),
     path("api/v1/learning/", include("apps.learning.urls")),
