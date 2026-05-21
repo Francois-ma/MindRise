@@ -60,6 +60,11 @@ class ResendEmailClient:
         if not self.is_configured:
             if settings.DEBUG:
                 return "debug-resend-disabled"
+            logger.error(
+                "Resend email delivery is not configured. RESEND_API_KEY set=%s, RESEND_FROM_EMAIL set=%s.",
+                bool(self.api_key),
+                bool(self.from_email),
+            )
             raise EmailDeliveryUnavailable()
 
         payload = {
@@ -87,7 +92,20 @@ class ResendEmailClient:
         try:
             with urllib.request.urlopen(request, timeout=self.timeout) as response:  # noqa: S310
                 body = response.read().decode("utf-8")
-        except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError) as exc:
+        except urllib.error.HTTPError as exc:
+            error_body = exc.read().decode("utf-8", errors="replace")
+            logger.error(
+                "Resend rejected verification email. status=%s reason=%s body=%s",
+                exc.code,
+                exc.reason,
+                error_body,
+            )
+            raise EmailDeliveryUnavailable() from exc
+        except urllib.error.URLError as exc:
+            logger.error("Resend email delivery failed before response: %s", exc)
+            raise EmailDeliveryUnavailable() from exc
+        except TimeoutError as exc:
+            logger.error("Resend email delivery timed out after %s seconds.", self.timeout)
             raise EmailDeliveryUnavailable() from exc
 
         try:
