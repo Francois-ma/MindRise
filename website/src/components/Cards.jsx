@@ -1,4 +1,4 @@
-export function ProgramCard({ icon: Icon, title, text, tone = 'emerald' }) {
+﻿export function ProgramCard({ icon: Icon, title, text, tone = 'emerald' }) {
   return (
     <article className={`program-card program-card--${tone}`}>
       <Icon size={28} aria-hidden="true" />

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+﻿import { useMemo, useState } from 'react';
 import { CheckCircle2, HeartPulse, Loader2, LockKeyhole, Mail, ShieldCheck, UserRound } from 'lucide-react';
 import { API_BASE_URL, registerAccount, verifyEmail } from '../api';
 import { logoUrl } from './Layout';

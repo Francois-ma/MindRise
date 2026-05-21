@@ -1,60 +1,17 @@
-import React from 'react';
+﻿import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { Brain, Eye, HandHeart, Megaphone, Target } from 'lucide-react';
-import { Layout, PageHero, SectionIntro } from '../components/Layout';
-import { ValueCard } from '../components/Cards';
+import { AboutHero, ApproachSection, DevelopmentCallout, HealingTimeline, MissionSection } from '../components/AboutSections';
+import { Layout } from '../components/Layout';
 import '../styles.css';
 
 function About() {
   return (
     <Layout active="about">
-      <PageHero
-        compact
-        eyebrow="About MindRise"
-        title="A youth-driven mental health initiative rooted in Rwanda."
-        lead="MindRise Wellness Initiative promotes emotional well-being, psychological resilience, and mental health literacy, especially among young people and underserved communities."
-      />
-
-      <section className="section section--split">
-        <SectionIntro
-          eyebrow="Our mission"
-          title="Break stigma, encourage open conversations, and make mental health support accessible."
-          lead="We believe mental health belongs in schools, communities, media spaces, digital platforms, and everyday conversations. Our work makes mental health knowledge easier to understand and support easier to seek."
-        />
-        <div className="mission-panel">
-          <Target size={32} aria-hidden="true" />
-          <h3>Rise Above, Speak Out</h3>
-          <p>Our slogan is a call to move beyond silence and shame, speak honestly about mental health, and build communities where healing is possible.</p>
-        </div>
-      </section>
-
-      <section className="section">
-        <SectionIntro eyebrow="Our approach" title="Inclusive, culturally sensitive, scientific, and practical." />
-        <div className="card-grid card-grid--four">
-          <ValueCard title="Youth-driven" text="Young people are not only beneficiaries. They are leaders, voices, organizers, and advocates in the work." />
-          <ValueCard title="Community grounded" text="We engage schools, students, professionals, institutions, and community leaders to build trust." />
-          <ValueCard title="Evidence-based" text="Our education is grounded in psychological science while remaining clear, useful, and relatable." />
-          <ValueCard title="Stigma-free" text="We create safe spaces where people can express themselves without shame or judgment." />
-        </div>
-      </section>
-
-      <section className="section timeline-section">
-        <SectionIntro eyebrow="Our belief" title="Healing moves through awareness, conversation, and community." />
-        <div className="timeline">
-          <div><Eye size={22} aria-hidden="true" /><strong>Awareness</strong><span>Mental health literacy helps people name what they feel and recognize when support matters.</span></div>
-          <div><Megaphone size={22} aria-hidden="true" /><strong>Conversation</strong><span>Open dialogue breaks stigma and makes it easier for young people to seek help.</span></div>
-          <div><HandHeart size={22} aria-hidden="true" /><strong>Community</strong><span>Sustainable care grows when families, schools, institutions, and peers support one another.</span></div>
-        </div>
-      </section>
-
-      <section className="section organization-callout">
-        <div>
-          <p className="eyebrow">Why it matters</p>
-          <h2>Mental health is part of sustainable development.</h2>
-          <p>When young people are emotionally supported, communities become healthier, more resilient, and better equipped to imagine their future.</p>
-        </div>
-        <Brain size={44} aria-hidden="true" />
-      </section>
+      <AboutHero />
+      <MissionSection />
+      <ApproachSection />
+      <HealingTimeline />
+      <DevelopmentCallout />
     </Layout>
   );
 }
