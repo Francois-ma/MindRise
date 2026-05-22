@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { fetchHealth } from '../api';
 import { Layout } from '../components/Layout';
-import { BeliefCallout, CommitmentStrip, HomeHero, WhatWeProvideSection, WhoWeAreSection } from '../components/HomeSections';
+import { BeliefCallout, CommitmentStrip, HealingPathSection, HomeHero, PathwaysSection, WhatWeProvideSection, WhoWeAreSection } from '../components/HomeSections';
 import '../styles.css';
 
 export function Home() {
@@ -18,7 +18,9 @@ export function Home() {
       <HomeHero health={health} />
       <CommitmentStrip />
       <WhoWeAreSection />
+      <PathwaysSection />
       <WhatWeProvideSection />
+      <HealingPathSection />
       <BeliefCallout />
     </Layout>
   );

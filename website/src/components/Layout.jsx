@@ -1,4 +1,4 @@
-﻿import { Footer } from './Footer';
+import { Footer } from './Footer';
 import { Header } from './Header';
 import { logoUrl } from './siteConfig';
 
@@ -12,9 +12,11 @@ export function Layout({ active, children }) {
   );
 }
 
-export function PageHero({ eyebrow, title, lead, children, compact = false }) {
+export function PageHero({ eyebrow, title, lead, children, compact = false, className = '' }) {
+  const heroClassName = ['page-hero', compact ? 'page-hero--compact' : '', className].filter(Boolean).join(' ');
+
   return (
-    <section className={compact ? 'page-hero page-hero--compact' : 'page-hero'}>
+    <section className={heroClassName}>
       <div className="page-hero__content">
         <p className="eyebrow">{eyebrow}</p>
         <h1>{title}</h1>
