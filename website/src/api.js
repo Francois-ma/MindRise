@@ -25,6 +25,28 @@ export async function fetchLearningContent() {
   };
 }
 
+
+export async function registerAccount(payload) {
+  return request('/auth/register/', {
+    method: 'POST',
+    body: JSON.stringify({
+      name: payload.name,
+      email: payload.email,
+      password: payload.password,
+      accepted_terms: true,
+    }),
+  });
+}
+
+export async function verifyEmail(payload) {
+  return request('/auth/email/verify/', {
+    method: 'POST',
+    body: JSON.stringify({
+      email: payload.email,
+      code: payload.code,
+    }),
+  });
+}
 async function request(path, options = {}) {
   try {
     const response = await fetch(`${API_BASE_URL}${path}`, {
