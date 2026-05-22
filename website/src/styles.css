@@ -1284,3 +1284,327 @@ img {
     padding-top: 42px;
   }
 }
+/* Mobile responsiveness hardening */
+main,
+.card-grid > *,
+.section--split > *,
+.contact-layout > *,
+.section--start-page > *,
+.resource-page-grid > *,
+.support-grid > *,
+.stats-grid > *,
+.timeline > *,
+.signup-panel > *,
+.footer-main > * {
+  min-width: 0;
+}
+
+.api-pill,
+.account-note,
+.field,
+.field div,
+.verification-heading,
+.checkbox-row,
+.resource-item,
+.materials-row a,
+.contact-methods div,
+.footer-column a,
+.footer-column p {
+  min-width: 0;
+}
+
+.page-hero h1,
+.page-hero--compact h1,
+.section-intro h2,
+.organization-callout h2,
+.program-card h3,
+.value-card h3,
+.mission-panel h3,
+.article-card h3,
+.support-card h3,
+.contact-panel h3,
+.verification-heading h3,
+.partnership-panel h3 {
+  overflow-wrap: break-word;
+}
+
+.form-status,
+.verification-heading p,
+.footer-column a,
+.footer-column p {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 760px) {
+  html,
+  body {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .site-header {
+    gap: 12px;
+    padding: 10px 16px;
+  }
+
+  .mobile-panel {
+    max-height: calc(100vh - 24px);
+    max-height: calc(100dvh - 24px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .mobile-panel__top span {
+    min-width: 0;
+    line-height: 1.25;
+    overflow-wrap: break-word;
+  }
+
+  .mobile-panel a {
+    display: flex;
+    align-items: center;
+    min-height: 46px;
+  }
+
+  .page-hero,
+  .page-hero--compact {
+    padding: 62px 16px 36px;
+    background-position: right 14px top 70px;
+    background-size: 92px;
+  }
+
+  .page-hero__content {
+    width: 100%;
+  }
+
+  .page-hero h1,
+  .page-hero--compact h1 {
+    font-size: clamp(30px, 8vw, 36px);
+    line-height: 1.12;
+  }
+
+  .page-hero__content > p:not(.eyebrow),
+  .section-intro > p:not(.eyebrow),
+  .organization-callout p:not(.eyebrow) {
+    font-size: 16px;
+    line-height: 1.68;
+  }
+
+  .api-pill {
+    width: 100%;
+    align-items: flex-start;
+    line-height: 1.45;
+  }
+
+  .hero-actions,
+  .partnership-actions {
+    gap: 10px;
+  }
+
+  .button {
+    min-height: 48px;
+    padding: 12px 14px;
+    line-height: 1.25;
+    white-space: normal;
+    text-align: center;
+  }
+
+  .button svg,
+  .account-note svg,
+  .resource-item > svg,
+  .materials-row svg,
+  .contact-methods svg {
+    flex: 0 0 auto;
+  }
+
+  .section {
+    width: min(100% - 28px, 620px);
+    padding: 54px 0;
+  }
+
+  .section--split,
+  .contact-layout,
+  .section--start-page,
+  .resource-page-grid,
+  .support-grid,
+  .stats-grid,
+  .timeline,
+  .signup-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .program-card,
+  .value-card,
+  .mission-panel,
+  .support-card,
+  .stat,
+  .resource-item,
+  .article-card,
+  .topic-panel,
+  .partnership-panel,
+  .signup-panel__aside,
+  .form-card {
+    width: 100%;
+    padding: 22px;
+  }
+
+  .signup-panel {
+    gap: 14px;
+  }
+
+  .signup-panel__aside img {
+    width: 64px;
+    height: 64px;
+  }
+
+  .account-note {
+    padding: 12px;
+  }
+
+  .field div {
+    min-height: 50px;
+    padding: 0 12px;
+  }
+
+  .verification-heading {
+    gap: 12px;
+  }
+
+  .footer-main,
+  .footer-bottom {
+    width: min(100% - 28px, 620px);
+  }
+
+  .footer-column a,
+  .footer-column p {
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 520px) {
+  .brand {
+    gap: 10px;
+  }
+
+  .brand-text strong {
+    font-size: 15px;
+  }
+
+  .brand-text small {
+    max-width: 132px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .icon-button {
+    width: 42px;
+    height: 42px;
+  }
+
+  .page-hero,
+  .page-hero--compact {
+    padding-top: 58px;
+    background-position: right 12px top 66px;
+    background-size: 78px;
+  }
+
+  .page-hero h1,
+  .page-hero--compact h1 {
+    font-size: 30px;
+  }
+
+  .section-intro h2,
+  .organization-callout h2 {
+    font-size: 26px;
+    line-height: 1.18;
+  }
+
+  .trust-strip div,
+  .materials-row a,
+  .contact-methods div {
+    padding: 16px;
+  }
+
+  .article-card,
+  .resource-item,
+  .organization-callout,
+  .partnership-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .resource-item {
+    align-items: flex-start;
+  }
+
+  .verification-heading {
+    display: grid;
+  }
+
+  .signup-panel__aside,
+  .form-card,
+  .program-card,
+  .value-card,
+  .mission-panel,
+  .support-card,
+  .stat,
+  .resource-item,
+  .article-card,
+  .topic-panel,
+  .partnership-panel {
+    padding: 18px;
+  }
+
+  .form-card {
+    gap: 14px;
+  }
+}
+
+@media (max-width: 380px) {
+  .site-header {
+    padding-inline: 12px;
+  }
+
+  .brand img,
+  .footer-brand img {
+    width: 36px;
+    height: 36px;
+  }
+
+  .brand-text small {
+    display: none;
+  }
+
+  .mobile-panel {
+    inset: 8px;
+    padding: 12px;
+  }
+
+  .mobile-panel a {
+    padding: 12px;
+  }
+
+  .page-hero h1,
+  .page-hero--compact h1 {
+    font-size: 28px;
+  }
+
+  .section {
+    width: min(100% - 24px, 360px);
+  }
+
+  .program-card,
+  .value-card,
+  .mission-panel,
+  .support-card,
+  .stat,
+  .resource-item,
+  .article-card,
+  .topic-panel,
+  .partnership-panel,
+  .signup-panel__aside,
+  .form-card {
+    padding: 16px;
+  }
+}
