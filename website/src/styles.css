@@ -1376,3 +1376,30 @@ body,
 .form-status--error {
   color: #000000;
 }
+/* Footer requested in dark green. */
+.site-footer {
+  border-top-color: #063d35;
+  background: #063d35;
+  color: #ffffff;
+  box-shadow: none;
+}
+
+.site-footer .footer-brand span,
+.site-footer .footer-brand-block p,
+.site-footer .footer-brand-block strong,
+.site-footer .footer-column > span,
+.site-footer .footer-column a,
+.site-footer .footer-column p,
+.site-footer .footer-bottom {
+  color: #ffffff;
+}
+
+.site-footer .footer-column a:hover,
+.site-footer .footer-column a:focus-visible {
+  color: #dff8ef;
+  text-decoration: underline;
+}
+
+.site-footer .footer-bottom {
+  border-top-color: rgba(255, 255, 255, 0.24);
+}
