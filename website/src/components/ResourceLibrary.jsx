@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { BookOpen, ExternalLink, Loader2, ShieldCheck } from 'lucide-react';
 import { fetchLearningContent } from '../api';
 import { PageHero, SectionIntro } from './Layout';
@@ -67,7 +67,7 @@ export function ResourceLibrary() {
         <SectionIntro
           eyebrow="Psychoeducation"
           title="Resources for awareness, prevention, and early support."
-          lead="The website can display published learning content from the backend while keeping core educational guidance available for visitors."
+          lead="MindRise keeps practical education available for visitors while supporting published learning content from our digital platform."
         />
         <ArticleList articles={articles} />
         {learning.materials.length > 0 && <MaterialsRow materials={learning.materials} />}

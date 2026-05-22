@@ -4,7 +4,7 @@ export const API_BASE_URL = configuredApiBaseUrl
   .replace('https://mindrise.onrender.com', 'https://mindrise-api.onrender.com')
   .replace(/\/$/, '');
 
-const corsHint = 'The browser could not reach MindRise API. Verify VITE_API_BASE_URL and add this website origin to CORS_ALLOWED_ORIGINS on Render.';
+const serviceUnavailableHint = 'MindRise digital services are temporarily unavailable. Please try again later.';
 
 export async function fetchHealth() {
   return request('/health/');
@@ -67,7 +67,7 @@ async function request(path, options = {}) {
     const data = text ? safeJson(text) : null;
 
     if (!response.ok) {
-      const message = data?.error?.message || data?.detail || data?.message || `Request failed with status ${response.status}`;
+      const message = extractErrorMessage(data) || `Request failed with status ${response.status}`;
       const error = new Error(message);
       error.status = response.status;
       error.details = data;
@@ -77,12 +77,35 @@ async function request(path, options = {}) {
     return data;
   } catch (error) {
     if (error instanceof TypeError) {
-      throw new Error(corsHint);
+      throw new Error(serviceUnavailableHint);
     }
     throw error;
   }
 }
 
+function extractErrorMessage(data) {
+  const directMessage = data?.detail || data?.message;
+  if (directMessage) return directMessage;
+
+  const apiError = data?.error;
+  if (!apiError) return '';
+
+  const details = apiError.details;
+  if (details && typeof details === 'object') {
+    const fieldMessages = Object.entries(details)
+      .flatMap(([field, value]) => {
+        const messages = Array.isArray(value) ? value : [value];
+        return messages.filter(Boolean).map((message) => `${formatFieldName(field)}: ${message}`);
+      });
+    if (fieldMessages.length) return fieldMessages.join(' ');
+  }
+
+  return apiError.message || '';
+}
+
+function formatFieldName(field) {
+  return field.replaceAll('_', ' ').replace(/^\w/, (letter) => letter.toUpperCase());
+}
 function safeJson(text) {
   try {
     return JSON.parse(text);

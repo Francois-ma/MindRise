@@ -1,4 +1,4 @@
-﻿import { PageHero, SectionIntro } from './Layout';
+import { PageHero, SectionIntro } from './Layout';
 import { SignupPanel } from './SignupPanel';
 
 export function StartHero() {
@@ -18,7 +18,7 @@ export function StartAccountSection() {
       <SectionIntro
         eyebrow="Secure onboarding"
         title="Create a verified account for the MindRise mobile experience."
-        lead="Registration connects to the existing Django backend and sends a verification code before sign-in. Browser-based signup also requires the website origin to be allowed in Render CORS settings."
+        lead="Registration connects securely to MindRise services and sends a verification code before sign-in."
       />
       <SignupPanel />
     </section>

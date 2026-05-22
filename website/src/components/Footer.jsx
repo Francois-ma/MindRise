@@ -1,6 +1,5 @@
-﻿import { Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { ExternalLink, Mail, MapPin } from 'lucide-react';
-import { API_BASE_URL } from '../api';
 import { logoUrl } from './siteConfig';
 
 export function Footer() {
@@ -43,8 +42,8 @@ export function Footer() {
       </div>
 
       <div className="footer-bottom">
-        <span>© {year} MindRise Wellness Initiative. All rights reserved.</span>
-        <span>Backend connected to {API_BASE_URL}</span>
+        <span>&copy; {year} MindRise Wellness Initiative. All rights reserved.</span>
+        <span>Rise Above, Speak Out.</span>
       </div>
     </footer>
   );

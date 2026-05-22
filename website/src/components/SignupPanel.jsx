@@ -1,6 +1,6 @@
-﻿import { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { CheckCircle2, HeartPulse, Loader2, LockKeyhole, Mail, ShieldCheck, UserRound } from 'lucide-react';
-import { API_BASE_URL, registerAccount, verifyEmail } from '../api';
+import { registerAccount, verifyEmail } from '../api';
 import { logoUrl } from './Layout';
 
 export function SignupPanel() {
@@ -50,17 +50,17 @@ export function SignupPanel() {
       <div className="signup-panel__aside">
         <img src={logoUrl} alt="MindRise logo" />
         <h3>Secure account access</h3>
-        <p>MindRise verifies every new account before sign-in and keeps care activity behind authenticated backend endpoints.</p>
+        <p>MindRise verifies every new account before sign-in and keeps personal wellness activity behind secure access.</p>
         <div className="endpoint-box">
-          <span>Connected API</span>
-          <code>{API_BASE_URL}</code>
+          <span>Verified onboarding</span>
+          <strong>Secure account creation with email verification.</strong>
         </div>
       </div>
       {!pendingEmail && !verified ? (
         <form className="form-card" onSubmit={submitRegistration}>
           <Field icon={UserRound} label="Full name" value={form.name} onChange={(value) => setForm((current) => ({ ...current, name: value }))} autoComplete="name" />
           <Field icon={Mail} label="Email address" type="email" value={form.email} onChange={(value) => setForm((current) => ({ ...current, email: value }))} autoComplete="email" />
-          <Field icon={LockKeyhole} label="Password" type="password" value={form.password} onChange={(value) => setForm((current) => ({ ...current, password: value }))} autoComplete="new-password" hint="Minimum 10 characters" />
+          <Field icon={LockKeyhole} label="Password" type="password" value={form.password} onChange={(value) => setForm((current) => ({ ...current, password: value }))} autoComplete="new-password" hint="At least 10 characters, not common or all numeric" />
           <label className="checkbox-row">
             <input type="checkbox" checked={form.accepts} onChange={(event) => setForm((current) => ({ ...current, accepts: event.target.checked }))} />
             <span>I agree to privacy-first care terms.</span>

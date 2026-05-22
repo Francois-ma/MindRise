@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { ArrowRight, Menu, X } from 'lucide-react';
 import { logoUrl, navItems } from './siteConfig';
@@ -10,7 +10,7 @@ export function Header() {
     <header className="site-header">
       <Link className="brand" to="/" aria-label="MindRise Wellness Initiative home">
         <img src={logoUrl} alt="MindRise Wellness Initiative logo" />
-        <span>MindRise</span>
+        <span className="brand-text"><strong>MindRise</strong><small>Wellness Initiative</small></span>
       </Link>
       <nav className="desktop-nav" aria-label="Primary navigation">
         {navItems.map((item) => (
@@ -18,7 +18,7 @@ export function Header() {
         ))}
       </nav>
       <Link className="header-action" to="/start">
-        <span>Rise Above</span>
+        <span>Get involved</span>
         <ArrowRight size={18} aria-hidden="true" />
       </Link>
       <button className="icon-button mobile-menu-button" type="button" aria-label="Open menu" onClick={() => setMenuOpen(true)}>
@@ -41,7 +41,7 @@ function MobileMenu({ onClose }) {
       {navItems.map((item) => (
         <NavLink className={({ isActive }) => (isActive ? 'is-active' : undefined)} key={item.key} to={item.href} onClick={onClose}>{item.label}</NavLink>
       ))}
-      <Link className="mobile-panel__cta" to="/start" onClick={onClose}>Rise Above, Speak Out</Link>
+      <Link className="mobile-panel__cta" to="/start" onClick={onClose}>Get involved</Link>
     </div>
   );
 }

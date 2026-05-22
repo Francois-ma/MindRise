@@ -1,16 +1,16 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { fetchHealth } from '../api';
 import { Layout } from '../components/Layout';
 import { BeliefCallout, CommitmentStrip, HomeHero, WhatWeProvideSection, WhoWeAreSection } from '../components/HomeSections';
 import '../styles.css';
 
 export function Home() {
-  const [health, setHealth] = useState({ status: 'checking', message: 'Checking API connection' });
+  const [health, setHealth] = useState({ status: 'checking', message: 'Checking digital services' });
 
   useEffect(() => {
     fetchHealth()
-      .then(() => setHealth({ status: 'online', message: 'Connected to MindRise API' }))
-      .catch((error) => setHealth({ status: 'offline', message: error.message }));
+      .then(() => setHealth({ status: 'online', message: 'Digital services available' }))
+      .catch(() => setHealth({ status: 'offline', message: 'Digital services are temporarily unavailable' }));
   }, []);
 
   return (
