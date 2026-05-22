@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { ArrowRight, Menu, X } from 'lucide-react';
 import { logoMarkUrl, navItems } from './siteConfig';
@@ -83,8 +84,10 @@ export function Header() {
 }
 
 function MobileMenu({ onClose }) {
-  return (
-    <>
+  if (typeof document === 'undefined') return null;
+
+  return createPortal(
+    <div className="mobile-drawer" role="presentation">
       <button className="mobile-panel__backdrop" type="button" aria-label="Close menu" onClick={onClose} />
       <nav id="mobile-navigation" className="mobile-panel" aria-label="Mobile navigation">
         <div className="mobile-panel__top">
@@ -93,11 +96,14 @@ function MobileMenu({ onClose }) {
             <X size={22} aria-hidden="true" />
           </button>
         </div>
-        {navItems.map((item) => (
-          <NavLink className={({ isActive }) => (isActive ? 'is-active' : undefined)} key={item.key} to={item.href} onClick={onClose}>{item.label}</NavLink>
-        ))}
-        <NavLink className={({ isActive }) => `mobile-panel__cta${isActive ? ' is-active' : ''}`} to="/start" onClick={onClose}>Get involved</NavLink>
+        <div className="mobile-panel__links">
+          {navItems.map((item) => (
+            <NavLink className={({ isActive }) => (isActive ? 'is-active' : undefined)} key={item.key} to={item.href} onClick={onClose}>{item.label}</NavLink>
+          ))}
+          <NavLink className={({ isActive }) => `mobile-panel__cta${isActive ? ' is-active' : ''}`} to="/start" onClick={onClose}>Get involved</NavLink>
+        </div>
       </nav>
-    </>
+    </div>,
+    document.body,
   );
 }
