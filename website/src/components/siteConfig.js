@@ -1,4 +1,6 @@
-﻿export const logoUrl = '/mindrise_icon.jpeg';
+export const logoMarkUrl = '/mindrise_icon.jpeg';
+export const logoFullUrl = '/mindrise_logo_full.jpeg';
+export const logoUrl = logoMarkUrl;
 
 export const navItems = [
   { href: '/', label: 'Home', key: 'home' },

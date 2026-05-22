@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { CheckCircle2, HeartPulse, Loader2, LockKeyhole, Mail, ShieldCheck, UserRound } from 'lucide-react';
 import { registerAccount, verifyEmail } from '../api';
-import { logoUrl } from './Layout';
+import { logoFullUrl } from './siteConfig';
 
 export function SignupPanel() {
   const [form, setForm] = useState({ name: '', email: '', password: '', accepts: false });
@@ -51,7 +51,7 @@ export function SignupPanel() {
   return (
     <div className="signup-panel">
       <div className="signup-panel__aside">
-        <img src={logoUrl} alt="MindRise logo" />
+        <img className="signup-panel__logo" src={logoFullUrl} alt="MindRise Wellness Initiative logo" />
         <h3>Create a MindRise account</h3>
         <p>Use the form to create your account and confirm your email before signing in.</p>
         <div className="account-note">

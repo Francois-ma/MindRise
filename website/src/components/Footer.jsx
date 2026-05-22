@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
-import { ExternalLink, Mail, MapPin } from 'lucide-react';
-import { logoUrl } from './siteConfig';
+import { Mail, MapPin } from 'lucide-react';
+import { logoFullUrl } from './siteConfig';
 
 export function Footer() {
   const year = new Date().getFullYear();
@@ -9,10 +9,9 @@ export function Footer() {
     <footer className="site-footer">
       <div className="footer-main">
         <div className="footer-brand-block">
-          <div className="footer-brand">
-            <img src={logoUrl} alt="" />
-            <span>MindRise Wellness Initiative</span>
-          </div>
+          <Link className="footer-brand footer-brand--lockup" to="/" aria-label="MindRise Wellness Initiative home">
+            <img className="footer-logo-full" src={logoFullUrl} alt="MindRise Wellness Initiative" />
+          </Link>
           <p>MindRise is a youth-driven mental health organization promoting emotional well-being, psychological resilience, and mental health literacy in Rwanda.</p>
           <strong>Rise Above, Speak Out.</strong>
         </div>
