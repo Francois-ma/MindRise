@@ -6,8 +6,8 @@ import { InlineState } from './Cards';
 
 const fallbackCategories = [
   { id: 'stress', name: 'Stress' },
-  { id: 'anxiety', name: 'Anxiety' },
-  { id: 'depression', name: 'Depression' },
+  { id: 'confidence', name: 'Confidence' },
+  { id: 'communication', name: 'Communication' },
   { id: 'self-esteem', name: 'Self-esteem' },
   { id: 'life-transitions', name: 'Life transitions' },
   { id: 'resilience', name: 'Psychological resilience' },
@@ -43,7 +43,7 @@ export function ResourcesHero() {
       compact
       eyebrow="Resources"
       title="Mental health literacy that young people can actually use."
-      lead="MindRise provides evidence-based, culturally sensitive resources on emotional well-being, resilience, stress, anxiety, depression, self-esteem, and life transitions."
+      lead="MindRise provides evidence-informed, culturally sensitive resources on emotional well-being, resilience, confidence, communication, and life transitions."
     />
   );
 }
@@ -67,7 +67,7 @@ export function ResourceLibrary() {
         <SectionIntro
           eyebrow="Psychoeducation"
           title="Resources for awareness, prevention, and early support."
-          lead="MindRise keeps practical education available for visitors while supporting published learning content from our digital platform."
+          lead="MindRise keeps practical education available for visitors while supporting published learning content from our organization."
         />
         <ArticleList articles={articles} />
         {learning.materials.length > 0 && <MaterialsRow materials={learning.materials} />}

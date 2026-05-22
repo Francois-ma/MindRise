@@ -1252,3 +1252,121 @@ img {
     padding-top: 42px;
   }
 }
+/* Black text presentation requested for the public organization site. */
+:root {
+  --ink: #000000;
+  --ink-soft: #000000;
+  --muted: #000000;
+  --quiet: #000000;
+}
+
+body,
+.brand-text strong,
+.brand-text small,
+.desktop-nav a,
+.page-hero h1,
+.page-hero__content > p:not(.eyebrow),
+.section-intro h2,
+.section-intro > p:not(.eyebrow),
+.program-card h3,
+.value-card h3,
+.mission-panel h3,
+.article-card h3,
+.support-card h3,
+.contact-panel h3,
+.signup-panel__aside h3,
+.verification-heading h3,
+.program-card p,
+.value-card p,
+.mission-panel p,
+.article-card p,
+.support-card p,
+.contact-panel p,
+.signup-panel__aside p,
+.verification-heading p,
+.resource-item p,
+.timeline span,
+.model-steps span,
+.contact-methods div,
+.field > span,
+.field small,
+.checkbox-row,
+.inline-state,
+.api-pill,
+.trust-strip div,
+.stat strong,
+.stat span,
+.article-card small,
+.resource-item strong,
+.resource-item span,
+.topic-list span,
+.article-card span,
+.panel-heading,
+.eyebrow {
+  color: #000000;
+}
+
+.header-action,
+.button--primary,
+.mobile-panel__cta {
+  color: #000000 !important;
+  border-color: #000000;
+  background: #ffffff !important;
+  box-shadow: none;
+}
+
+.header-action:hover,
+.button--primary:hover,
+.mobile-panel__cta:hover {
+  background: #f3f5f4 !important;
+}
+
+.button--secondary,
+.button--light {
+  color: #000000;
+  border-color: #000000;
+  background: #ffffff;
+}
+
+.organization-callout,
+.support-card--primary,
+.endpoint-box,
+.site-footer {
+  color: #000000;
+  border: 1px solid var(--line);
+  background: #ffffff;
+  box-shadow: var(--shadow-card);
+}
+
+.organization-callout .eyebrow,
+.organization-callout p,
+.organization-callout p:not(.eyebrow),
+.organization-callout h2,
+.support-card--primary p,
+.support-card--primary h3,
+.endpoint-box span,
+.endpoint-box strong,
+.footer-brand span,
+.footer-brand-block p,
+.footer-brand-block strong,
+.footer-column > span,
+.footer-column a,
+.footer-column p,
+.footer-bottom {
+  color: #000000;
+}
+
+.footer-column a:hover,
+.footer-column a:focus-visible {
+  color: #000000;
+  text-decoration: underline;
+}
+
+.footer-bottom {
+  border-top-color: var(--line);
+}
+
+.form-status--success,
+.form-status--error {
+  color: #000000;
+}

@@ -1,4 +1,4 @@
-﻿import { BookOpen, Building2, HeartPulse, Megaphone, MessageCircle, Radio, School } from 'lucide-react';
+import { BookOpen, Building2, HeartPulse, Megaphone, MessageCircle, Radio, School } from 'lucide-react';
 import { PageHero, SectionIntro } from './Layout';
 import { ProgramCard } from './Cards';
 
@@ -12,7 +12,7 @@ const programs = [
   {
     icon: School,
     title: 'School outreach',
-    text: 'Youth-friendly sessions for students on stress, anxiety, depression, self-esteem, and life transitions.',
+    text: 'Youth-friendly sessions for students on emotional awareness, confidence, communication, and life transitions.',
     tone: 'blue',
   },
   {
@@ -30,7 +30,7 @@ const programs = [
   {
     icon: HeartPulse,
     title: 'Early-intervention tools',
-    text: 'Preventive and psychoeducational tools that support emotional awareness before crisis develops.',
+    text: 'Preventive education tools that support emotional awareness before challenges grow.',
     tone: 'cyan',
   },
   {
@@ -47,7 +47,7 @@ export function ProgramsHero() {
       compact
       eyebrow="Programs"
       title="Community programs for mental health literacy and resilience."
-      lead="MindRise works through digital platforms, community programs, school outreach, and media engagement to make mental health support practical and accessible."
+      lead="MindRise works through community programs, school outreach, educational resources, and media engagement to make mental health support practical and accessible."
     />
   );
 }

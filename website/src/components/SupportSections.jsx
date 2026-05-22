@@ -1,26 +1,14 @@
-﻿import { Link } from 'react-router-dom';
-import { useEffect, useState } from 'react';
-import { HandHeart, Loader2, MessageCircle, Phone, ShieldCheck, UsersRound } from 'lucide-react';
-import { fetchCrisisResources } from '../api';
+import { Link } from 'react-router-dom';
+import { BookOpen, HandHeart, MessageCircle, UsersRound } from 'lucide-react';
 import { PageHero, SectionIntro } from './Layout';
-import { InlineState } from './Cards';
-
-const fallbackResources = [
-  {
-    id: 'emergency',
-    title: 'Emergency support',
-    phone_number: '112',
-    description: 'If someone is in immediate danger, contact local emergency services right away.',
-  },
-];
 
 export function SupportHero() {
   return (
     <PageHero
       compact
       eyebrow="Support"
-      title="No one should feel alone in their mental health journey."
-      lead="MindRise creates safe spaces for expression, dialogue, education, and early support while helping young people know when and how to seek more help."
+      title="Community support through education, dialogue, and connection."
+      lead="MindRise creates respectful spaces for expression and learning while helping communities understand how to respond with care."
     />
   );
 }
@@ -31,7 +19,7 @@ export function SupportPathways() {
       <article className="support-card support-card--primary">
         <MessageCircle size={30} aria-hidden="true" />
         <h3>Safe spaces for dialogue</h3>
-        <p>We encourage open conversations where young people can express what they feel, listen to others, and challenge stigma together.</p>
+        <p>We encourage open conversations where young people can express themselves, listen to others, and challenge stigma together.</p>
         <Link className="button button--light" to="/contact">Partner with us</Link>
       </article>
       <article className="support-card">
@@ -44,37 +32,29 @@ export function SupportPathways() {
 }
 
 export function UrgentSupportSection() {
-  const [resources, setResources] = useState({ items: [], error: '', loading: true });
-
-  useEffect(() => {
-    fetchCrisisResources()
-      .then((items) => setResources({ items, error: '', loading: false }))
-      .catch((error) => setResources({ items: [], error: error.message, loading: false }));
-  }, []);
-
-  const crisisResources = resources.items.length ? resources.items : fallbackResources;
-
   return (
     <section className="section urgent-section">
       <SectionIntro
-        eyebrow="Early support"
-        title="Preventive help, crisis awareness, and accessible guidance."
-        lead="MindRise is not an emergency service, but we help communities understand warning signs, reduce silence, and connect people to appropriate support."
+        eyebrow="Guidance"
+        title="Practical education that helps communities respond early."
+        lead="Our work focuses on awareness, prevention, and supportive conversations in settings where young people live, study, and gather."
       />
       <div className="resource-list">
-        {crisisResources.map((resource) => (
-          <article className="resource-item" key={resource.id || resource.title}>
-            <Phone size={22} aria-hidden="true" />
-            <div>
-              <strong>{resource.title}</strong>
-              <p>{resource.description}</p>
-              <span>{resource.phone_number || resource.phoneNumber || 'Local emergency services'}</span>
-            </div>
-          </article>
-        ))}
+        <article className="resource-item">
+          <BookOpen size={22} aria-hidden="true" />
+          <div>
+            <strong>Mental health literacy</strong>
+            <p>Clear, youth-friendly education that helps people understand emotional well-being and reduce stigma.</p>
+          </div>
+        </article>
+        <article className="resource-item">
+          <HandHeart size={22} aria-hidden="true" />
+          <div>
+            <strong>Community response</strong>
+            <p>Programs that help schools, families, and local groups build more supportive environments.</p>
+          </div>
+        </article>
       </div>
-      {resources.loading && <InlineState icon={Loader2} text="Loading crisis resources" spin />}
-      {resources.error && <InlineState icon={ShieldCheck} text={resources.error} />}
     </section>
   );
 }

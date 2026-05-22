@@ -5,12 +5,12 @@ import { BeliefCallout, CommitmentStrip, HomeHero, WhatWeProvideSection, WhoWeAr
 import '../styles.css';
 
 export function Home() {
-  const [health, setHealth] = useState({ status: 'checking', message: 'Checking digital services' });
+  const [health, setHealth] = useState({ status: 'checking', message: 'Checking availability' });
 
   useEffect(() => {
     fetchHealth()
-      .then(() => setHealth({ status: 'online', message: 'Digital services available' }))
-      .catch(() => setHealth({ status: 'offline', message: 'Digital services are temporarily unavailable' }));
+      .then(() => setHealth({ status: 'online', message: 'Organization updates available' }))
+      .catch(() => setHealth({ status: 'offline', message: 'Updates are temporarily unavailable' }));
   }, []);
 
   return (

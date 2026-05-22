@@ -1,4 +1,4 @@
-﻿import { Brain, Eye, HandHeart, Megaphone, Target } from 'lucide-react';
+import { Brain, Eye, HandHeart, Megaphone, Target } from 'lucide-react';
 import { PageHero, SectionIntro } from './Layout';
 import { ValueCard } from './Cards';
 
@@ -19,7 +19,7 @@ export function MissionSection() {
       <SectionIntro
         eyebrow="Our mission"
         title="Break stigma, encourage open conversations, and make mental health support accessible."
-        lead="We believe mental health belongs in schools, communities, media spaces, digital platforms, and everyday conversations. Our work makes mental health knowledge easier to understand and support easier to seek."
+        lead="We believe mental health belongs in schools, communities, media spaces, community programs, media spaces, and everyday conversations. Our work makes mental health knowledge easier to understand and support easier to seek."
       />
       <div className="mission-panel">
         <Target size={32} aria-hidden="true" />

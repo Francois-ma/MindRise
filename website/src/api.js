@@ -4,7 +4,7 @@ export const API_BASE_URL = configuredApiBaseUrl
   .replace('https://mindrise.onrender.com', 'https://mindrise-api.onrender.com')
   .replace(/\/$/, '');
 
-const serviceUnavailableHint = 'MindRise digital services are temporarily unavailable. Please try again later.';
+const serviceUnavailableHint = 'MindRise updates are temporarily unavailable. Please try again later.';
 
 export async function fetchHealth() {
   return request('/health/');
@@ -23,33 +23,6 @@ export async function fetchLearningContent() {
     materials: unwrapList(materials),
     error: firstError([categories, articles, materials]),
   };
-}
-
-export async function fetchCrisisResources() {
-  const data = await request('/support/crisis-resources/?country_code=RW');
-  return readList(data);
-}
-
-export async function registerAccount(payload) {
-  return request('/auth/register/', {
-    method: 'POST',
-    body: JSON.stringify({
-      name: payload.name,
-      email: payload.email,
-      password: payload.password,
-      accepted_terms: true,
-    }),
-  });
-}
-
-export async function verifyEmail(payload) {
-  return request('/auth/email/verify/', {
-    method: 'POST',
-    body: JSON.stringify({
-      email: payload.email,
-      code: payload.code,
-    }),
-  });
 }
 
 async function request(path, options = {}) {
@@ -106,6 +79,7 @@ function extractErrorMessage(data) {
 function formatFieldName(field) {
   return field.replaceAll('_', ' ').replace(/^\w/, (letter) => letter.toUpperCase());
 }
+
 function safeJson(text) {
   try {
     return JSON.parse(text);

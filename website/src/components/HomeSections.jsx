@@ -1,4 +1,4 @@
-﻿import { Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Activity, ArrowRight, BookOpen, HeartPulse, Loader2, Megaphone, MessageCircle, Sparkles, UsersRound } from 'lucide-react';
 import { PageHero, SectionIntro } from './Layout';
 import { ProgramCard, Stat } from './Cards';
@@ -38,7 +38,7 @@ export function WhoWeAreSection() {
       <SectionIntro
         eyebrow="Who we are"
         title="Mental health is not a luxury. It is part of human well-being and sustainable development."
-        lead="MindRise works to make mental health support more accessible through awareness campaigns, educational resources, community engagement, school outreach, digital platforms, media engagement, and early-intervention initiatives."
+        lead="MindRise works to make mental health support more accessible through awareness campaigns, educational resources, community engagement, school outreach, media engagement, and early-stage education initiatives."
       />
       <div className="stats-grid">
         <Stat value="Youth" label="Driven by young leaders and lived community needs" />
@@ -54,9 +54,9 @@ export function WhatWeProvideSection() {
     <section className="section">
       <SectionIntro eyebrow="What we provide" title="Practical, relatable mental health support for real lives." />
       <div className="card-grid card-grid--four">
-        <ProgramCard icon={BookOpen} title="Mental health information" text="Evidence-based resources on stress, anxiety, depression, self-esteem, and life transitions." tone="lime" />
+        <ProgramCard icon={BookOpen} title="Mental health information" text="Evidence-informed resources on emotional awareness, confidence, relationships, and life transitions." tone="lime" />
         <ProgramCard icon={MessageCircle} title="Safe dialogue spaces" text="Community conversations that encourage expression, listening, and stigma-free support." tone="blue" />
-        <ProgramCard icon={HeartPulse} title="Preventive tools" text="Psychoeducational and early-intervention tools that help young people act before crisis." />
+        <ProgramCard icon={HeartPulse} title="Preventive tools" text="Preventive education tools that help young people reflect, communicate, and seek support early." />
         <ProgramCard icon={Sparkles} title="Youth-friendly guidance" text="Clear, culturally sensitive guidance that remains practical, warm, and relatable." tone="amber" />
       </div>
     </section>
