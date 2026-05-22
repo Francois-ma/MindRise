@@ -37,7 +37,6 @@ export function Footer() {
           <span>Connect</span>
           <a href="mailto:hello@mindrise.health"><Mail size={16} aria-hidden="true" /> hello@mindrise.health</a>
           <p><MapPin size={16} aria-hidden="true" /> Rwanda, youth and underserved communities</p>
-          <a href="https://mind-rise-coral.vercel.app" target="_blank" rel="noreferrer"><ExternalLink size={16} aria-hidden="true" /> mind-rise-coral.vercel.app</a>
         </div>
       </div>
 

@@ -144,9 +144,15 @@ img {
   padding: 0 10px;
   border-radius: var(--radius);
   color: var(--muted);
-  font-size: 14px;
-  font-weight: 760;
+  font-size: 13px;
+  font-weight: 820;
   letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.header-action,
+.mobile-panel a {
+  text-transform: uppercase;
 }
 
 .desktop-nav a:hover,
