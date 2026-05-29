@@ -38,6 +38,8 @@ class HomeScreen extends ConsumerWidget {
                   largeTitle: true,
                 ),
                 const SizedBox(height: AppSpacing.xl),
+                const _TrustRibbon(),
+                const SizedBox(height: AppSpacing.lg),
                 summary.when(
                   data: (data) => _CareSnapshot(summary: data),
                   loading: () => const InlineLoadingCard(
@@ -60,8 +62,10 @@ class HomeScreen extends ConsumerWidget {
                         ),
                       ),
                       const SizedBox(height: AppSpacing.lg),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        alignment: WrapAlignment.spaceBetween,
                         children: const [
                           _MoodShortcut(
                             icon: Icons.sentiment_very_satisfied,
@@ -106,6 +110,8 @@ class HomeScreen extends ConsumerWidget {
                     ],
                   ),
                 ),
+                const SizedBox(height: AppSpacing.lg),
+                const _CarePlanCard(),
                 const SizedBox(height: AppSpacing.xl),
                 Text(
                   'Quick Actions',
@@ -180,6 +186,127 @@ class HomeScreen extends ConsumerWidget {
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TrustRibbon extends StatelessWidget {
+  const _TrustRibbon();
+
+  @override
+  Widget build(BuildContext context) {
+    return const MRCard(
+      padding: EdgeInsets.all(16),
+      child: Row(
+        children: [
+          Expanded(
+            child: _TrustItem(
+              icon: Icons.verified_user_rounded,
+              label: 'Private',
+            ),
+          ),
+          Expanded(
+            child: _TrustItem(
+              icon: Icons.science_rounded,
+              label: 'Evidence-informed',
+            ),
+          ),
+          Expanded(
+            child: _TrustItem(icon: Icons.groups_rounded, label: 'Community'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TrustItem extends StatelessWidget {
+  const _TrustItem({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Icon(icon, color: AppColors.emerald, size: 22),
+        const SizedBox(height: 6),
+        Text(
+          label,
+          textAlign: TextAlign.center,
+          style: Theme.of(
+            context,
+          ).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w800),
+        ),
+      ],
+    );
+  }
+}
+
+class _CarePlanCard extends StatelessWidget {
+  const _CarePlanCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return MRCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const CircleAvatar(
+                backgroundColor: AppColors.emerald,
+                child: Icon(Icons.route_rounded, color: Colors.white),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Text(
+                  'Today\'s care path',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          const _CareStep(
+            label: 'Check in honestly',
+            icon: Icons.favorite_rounded,
+          ),
+          const _CareStep(
+            label: 'Notice one pattern',
+            icon: Icons.insights_rounded,
+          ),
+          const _CareStep(
+            label: 'Choose one small reset',
+            icon: Icons.spa_rounded,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CareStep extends StatelessWidget {
+  const _CareStep({required this.label, required this.icon});
+
+  final String label;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Row(
+        children: [
+          Icon(icon, color: AppColors.teal, size: 18),
+          const SizedBox(width: 10),
+          Expanded(child: Text(label)),
         ],
       ),
     );
@@ -267,17 +394,25 @@ class _MoodShortcut extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () => context.go('/mood'),
-      borderRadius: BorderRadius.circular(16),
-      child: Padding(
-        padding: const EdgeInsets.all(8),
-        child: Column(
-          children: [
-            Icon(icon, size: 30, color: AppColors.emerald),
-            const SizedBox(height: 6),
-            Text(label, style: Theme.of(context).textTheme.labelSmall),
-          ],
+    return SizedBox(
+      width: 58,
+      child: InkWell(
+        onTap: () => context.go('/mood'),
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Column(
+            children: [
+              Icon(icon, size: 30, color: AppColors.emerald),
+              const SizedBox(height: 6),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.labelSmall,
+              ),
+            ],
+          ),
         ),
       ),
     );

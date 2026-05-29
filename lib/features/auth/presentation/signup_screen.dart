@@ -60,26 +60,15 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     return Scaffold(
       body: AppBackground(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 40, 20, 28),
+          padding: const EdgeInsets.fromLTRB(20, 36, 20, 28),
           child: Form(
             key: _formKey,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Container(
-                  width: 90,
-                  height: 90,
-                  margin: const EdgeInsets.only(bottom: 24),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: Image.asset(
-                    'assets/images/mindrise_icon.jpeg',
-                    fit: BoxFit.cover,
-                  ),
-                ),
+                const _SignupLogo(),
+                const SizedBox(height: AppSpacing.xl),
                 Text(
                   'Create Account',
                   style: theme.textTheme.headlineLarge?.copyWith(
@@ -89,7 +78,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Start tracking, learning, and getting support in one private place. We will verify your email before sign-in.',
+                  'Start with a verified account for MindRise digital features.',
                   style: theme.textTheme.bodyLarge?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -157,8 +146,12 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                           setState(() => _acceptsCareTerms = value ?? false);
                         },
                         contentPadding: EdgeInsets.zero,
+                        controlAffinity: ListTileControlAffinity.leading,
                         title: const Text(
-                          'I agree to privacy-first care terms',
+                          'I agree to create a MindRise account.',
+                        ),
+                        subtitle: const Text(
+                          'Email verification helps keep accounts trusted.',
                         ),
                       ),
                     ],
@@ -197,6 +190,43 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SignupLogo extends StatelessWidget {
+  const _SignupLogo();
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        width: 148,
+        height: 148,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(26),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.outlineVariant,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.emerald.withValues(alpha: .14),
+              blurRadius: 22,
+              offset: const Offset(0, 12),
+            ),
+          ],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Image.asset(
+            'assets/images/mindrise_logo_full.jpeg',
+            fit: BoxFit.contain,
           ),
         ),
       ),

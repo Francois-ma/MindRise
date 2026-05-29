@@ -297,7 +297,13 @@ class _ResetScreenState extends State<ResetScreen>
         MRButton(
           label: 'Save Gratitude',
           icon: Icons.save_rounded,
-          onPressed: () {},
+          onPressed: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Gratitude saved for this session.'),
+              ),
+            );
+          },
         ),
       ],
     );
@@ -325,7 +331,11 @@ class _ResetScreenState extends State<ResetScreen>
         MRButton(
           label: 'Save Reframe',
           icon: Icons.check_rounded,
-          onPressed: () {},
+          onPressed: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Reframe saved for this session.')),
+            );
+          },
         ),
       ],
     );

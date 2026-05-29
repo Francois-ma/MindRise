@@ -9,14 +9,21 @@ final dioProvider = Provider<Dio>((ref) {
   final storage = ref.watch(tokenStorageProvider);
   final dio = Dio(
     BaseOptions(
-      baseUrl: AppConfig.apiBaseUrl,
+      baseUrl: AppConfig.normalizedApiBaseUrl,
       connectTimeout: AppConfig.connectTimeout,
       receiveTimeout: AppConfig.receiveTimeout,
       responseType: ResponseType.json,
-      headers: {'Accept': 'application/json'},
+      contentType: Headers.jsonContentType,
+      headers: const {
+        'Accept': 'application/json',
+        'X-Client': 'mindrise-mobile',
+        'X-Client-Version': '1.0.0',
+        'X-App-Environment': AppConfig.environmentName,
+      },
     ),
   );
 
+  dio.interceptors.add(RetryInterceptor(dio: dio));
   dio.interceptors.add(AuthInterceptor(dio: dio, storage: storage));
   if (kDebugMode) {
     dio.interceptors.add(
@@ -40,6 +47,57 @@ class ApiException implements Exception {
 
   @override
   String toString() => message;
+}
+
+class RetryInterceptor extends Interceptor {
+  RetryInterceptor({required Dio dio}) : _dio = dio;
+
+  final Dio _dio;
+  static const _maxAttempts = 2;
+
+  @override
+  Future<void> onError(
+    DioException err,
+    ErrorInterceptorHandler handler,
+  ) async {
+    final attempt = err.requestOptions.extra['retryAttempt'] as int? ?? 0;
+    if (attempt >= _maxAttempts || !_shouldRetry(err)) {
+      handler.next(err);
+      return;
+    }
+
+    await Future<void>.delayed(Duration(milliseconds: 280 * (attempt + 1)));
+    final retryOptions = err.requestOptions;
+    retryOptions.extra['retryAttempt'] = attempt + 1;
+
+    try {
+      final response = await _dio.fetch<dynamic>(retryOptions);
+      handler.resolve(response);
+    } on DioException catch (error) {
+      handler.next(error);
+    } on Object {
+      handler.next(err);
+    }
+  }
+
+  bool _shouldRetry(DioException error) {
+    if (!_isSafeMethod(error.requestOptions.method)) return false;
+
+    final statusCode = error.response?.statusCode;
+    if (statusCode != null && statusCode >= 500) return true;
+
+    return switch (error.type) {
+      DioExceptionType.connectionTimeout ||
+      DioExceptionType.receiveTimeout ||
+      DioExceptionType.sendTimeout ||
+      DioExceptionType.connectionError => true,
+      _ => false,
+    };
+  }
+
+  bool _isSafeMethod(String method) {
+    return const {'GET', 'HEAD', 'OPTIONS'}.contains(method.toUpperCase());
+  }
 }
 
 class AuthInterceptor extends Interceptor {

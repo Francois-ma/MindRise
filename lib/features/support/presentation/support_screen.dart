@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -307,6 +308,30 @@ class _EmergencyCard extends StatelessWidget {
 
   final List<CrisisResource> resources;
 
+  Future<void> _callResource(
+    BuildContext context,
+    CrisisResource? resource,
+  ) async {
+    final phoneNumber = resource?.phoneNumber.trim() ?? '';
+    if (phoneNumber.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No phone number is available yet.')),
+      );
+      return;
+    }
+
+    final uri = Uri(
+      scheme: 'tel',
+      path: phoneNumber.replaceAll(RegExp(r'\s+'), ''),
+    );
+    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!opened && context.mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Could not open $phoneNumber.')));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final primary = resources.isNotEmpty ? resources.first : null;
@@ -345,7 +370,7 @@ class _EmergencyCard extends StatelessWidget {
             gradient: const LinearGradient(
               colors: [AppColors.rose, Color(0xFFFB7185)],
             ),
-            onPressed: () {},
+            onPressed: () => _callResource(context, primary),
           ),
         ],
       ),

@@ -37,7 +37,13 @@ class ProfileScreen extends ConsumerWidget {
                       color: Colors.white,
                     ),
                     trailing: IconButton.filledTonal(
-                      onPressed: () {},
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Profile editing is coming soon.'),
+                          ),
+                        );
+                      },
                       tooltip: 'Edit profile',
                       icon: const Icon(Icons.edit_rounded),
                       style: IconButton.styleFrom(
@@ -81,12 +87,34 @@ class ProfileScreen extends ConsumerWidget {
                       _SettingsTile(
                         icon: Icons.notifications_rounded,
                         label: 'Notifications',
-                        trailing: Switch(value: true, onChanged: (_) {}),
+                        trailing: Switch(
+                          value: true,
+                          onChanged: (_) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Notification settings are coming soon.',
+                                ),
+                              ),
+                            );
+                          },
+                        ),
                       ),
                       _SettingsTile(
                         icon: Icons.calendar_today_rounded,
                         label: 'Daily Reminders',
-                        trailing: Switch(value: true, onChanged: (_) {}),
+                        trailing: Switch(
+                          value: true,
+                          onChanged: (_) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Reminder settings are coming soon.',
+                                ),
+                              ),
+                            );
+                          },
+                        ),
                       ),
                       const _SettingsTile(
                         icon: Icons.settings_rounded,
@@ -231,7 +259,11 @@ class _SettingsTile extends StatelessWidget {
       title: Text(label),
       trailing: trailing ?? const Icon(Icons.chevron_right_rounded),
       minVerticalPadding: 12,
-      onTap: () {},
+      onTap: () {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('$label is coming soon.')));
+      },
     );
   }
 }

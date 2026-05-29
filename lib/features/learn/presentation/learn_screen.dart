@@ -93,7 +93,15 @@ class LearnScreen extends ConsumerWidget {
                         for (final category in items)
                           ActionChip(
                             label: Text(category.name),
-                            onPressed: () {},
+                            onPressed: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Showing ${category.name} resources soon.',
+                                  ),
+                                ),
+                              );
+                            },
                             backgroundColor: AppColors.emerald.withValues(
                               alpha: .10,
                             ),
@@ -356,7 +364,11 @@ class _ArticleTile extends ConsumerWidget {
 
     return MRCard(
       padding: const EdgeInsets.all(18),
-      onTap: () {},
+      onTap: () {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Article reading view is coming soon.')),
+        );
+      },
       child: Row(
         children: [
           Expanded(

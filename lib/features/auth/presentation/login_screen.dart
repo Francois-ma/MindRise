@@ -31,6 +31,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.dispose();
   }
 
+  void _showPasswordHelp() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Password recovery will be handled by MindRise support for now.',
+        ),
+      ),
+    );
+  }
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     final success = await ref
@@ -65,7 +75,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Continue your journey to mental wellness',
+                  'Continue your MindRise wellness journey.',
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodyLarge?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
@@ -77,7 +87,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     children: [
                       MRTextField(
                         label: 'Email Address',
-                        hint: 'francois@example.com',
+                        hint: 'you@example.com',
                         controller: _emailController,
                         icon: Icons.mail_rounded,
                         keyboardType: TextInputType.emailAddress,
@@ -127,7 +137,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                           const Expanded(child: Text('Remember me')),
                           TextButton(
-                            onPressed: () {},
+                            onPressed: _showPasswordHelp,
                             child: const Text('Forgot password?'),
                           ),
                         ],
@@ -167,29 +177,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   isLoading: auth.isLoading,
                   onPressed: _submit,
                 ),
-                const SizedBox(height: AppSpacing.xl),
-                Row(
-                  children: [
-                    const Expanded(child: Divider()),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: Text(
-                        'Or continue with',
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ),
-                    const Expanded(child: Divider()),
-                  ],
-                ),
                 const SizedBox(height: AppSpacing.lg),
-                OutlinedButton.icon(
-                  onPressed: () {},
-                  icon: const Icon(Icons.g_mobiledata_rounded, size: 28),
-                  label: const Text('Google'),
-                ),
-                const SizedBox(height: AppSpacing.xl),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -221,11 +209,14 @@ class _AuthLogo extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Container(
-        width: 112,
-        height: 112,
+        width: 176,
+        height: 176,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(28),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.outlineVariant,
+          ),
           boxShadow: [
             BoxShadow(
               color: AppColors.emerald.withValues(alpha: .18),
@@ -235,9 +226,12 @@ class _AuthLogo extends StatelessWidget {
           ],
         ),
         clipBehavior: Clip.antiAlias,
-        child: Image.asset(
-          'assets/images/mindrise_icon.jpeg',
-          fit: BoxFit.cover,
+        child: Padding(
+          padding: const EdgeInsets.all(10),
+          child: Image.asset(
+            'assets/images/mindrise_logo_full.jpeg',
+            fit: BoxFit.contain,
+          ),
         ),
       ),
     );

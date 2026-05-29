@@ -10,6 +10,8 @@ class AppBackground extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final width = MediaQuery.sizeOf(context).width;
+    final maxWidth = width >= 720 ? 1100.0 : 480.0;
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -30,7 +32,7 @@ class AppBackground extends StatelessWidget {
         bottom: false,
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
+            constraints: BoxConstraints(maxWidth: maxWidth),
             child: child,
           ),
         ),
