@@ -91,6 +91,13 @@ DJANGO_CSRF_TRUSTED_ORIGINS=https://your-api.onrender.com,https://your-custom-do
 CORS_ALLOWED_ORIGINS=https://your-web-client.com
 ```
 
+For the MindRise production website, keep both the Vercel preview domain and the custom domains in the Render API environment:
+
+```env
+DJANGO_CSRF_TRUSTED_ORIGINS=https://mindrise-api.onrender.com,https://mind-rise-coral.vercel.app,https://mindrisewellness.org,https://www.mindrisewellness.org
+CORS_ALLOWED_ORIGINS=https://mind-rise-coral.vercel.app,https://mindrisewellness.org,https://www.mindrisewellness.org
+```
+
 The Blueprint uses Render's private PostgreSQL connection string, so `DATABASE_SSL_REQUIRE=false` is intentional there. If you connect to an external PostgreSQL database over the public internet, set `DATABASE_SSL_REQUIRE=true`.
 
 The free Render web service uses an ephemeral filesystem, so uploaded learning materials can disappear after redeploys, restarts, or idle spin-downs. For production, upgrade the web service and attach a persistent disk or move uploads to object storage such as S3/R2.
