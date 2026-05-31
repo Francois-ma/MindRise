@@ -4,11 +4,24 @@ from pathlib import Path
 from decouple import Csv, config
 from dj_database_url import parse as parse_database_url
 
+
+def optional_int(value):
+    if value in (None, "", "none", "None", "null"):
+        return None
+    return int(value)
+
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = config("DJANGO_SECRET_KEY", default="")
 DEBUG = config("DJANGO_DEBUG", default=False, cast=bool)
 DJANGO_ENV = config("DJANGO_ENV", default="local")
+RUNNING_ON_RENDER = config("RENDER", default=False, cast=bool)
+DRF_NUM_PROXIES = config(
+    "DRF_NUM_PROXIES",
+    default="1" if RUNNING_ON_RENDER else "",
+    cast=optional_int,
+)
 
 if not SECRET_KEY and not DEBUG:
     raise RuntimeError("DJANGO_SECRET_KEY is required when DJANGO_DEBUG=false.")
@@ -38,6 +51,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt.token_blacklist",
     "apps.accounts",
+    "apps.contact",
     "apps.wellness",
     "apps.learning",
     "apps.support",
@@ -115,6 +129,7 @@ MEDIA_ROOT = Path(config("DJANGO_MEDIA_ROOT", default=str(BASE_DIR / "media")))
 if not MEDIA_ROOT.is_absolute():
     MEDIA_ROOT = BASE_DIR / MEDIA_ROOT
 SERVE_MEDIA_FILES = config("SERVE_MEDIA_FILES", default=DEBUG, cast=bool)
+PUBLIC_MEDIA_PREFIXES = tuple(config("PUBLIC_MEDIA_PREFIXES", default="learning/materials", cast=Csv()))
 STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
     "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
@@ -127,6 +142,7 @@ CORS_ALLOW_CREDENTIALS = config("CORS_ALLOW_CREDENTIALS", default=False, cast=bo
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework_simplejwt.authentication.JWTAuthentication",),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
+    "NUM_PROXIES": DRF_NUM_PROXIES,
     "DEFAULT_FILTER_BACKENDS": (
         "django_filters.rest_framework.DjangoFilterBackend",
         "rest_framework.filters.OrderingFilter",
@@ -143,6 +159,7 @@ REST_FRAMEWORK = {
         "anon": "20/minute",
         "user": "120/minute",
         "auth": "8/minute",
+        "contact": "5/minute",
     },
     "EXCEPTION_HANDLER": "config.exceptions.api_exception_handler",
 }
@@ -164,7 +181,6 @@ SPECTACULAR_SETTINGS = {
 }
 
 SECURE_SSL_REDIRECT = config("SECURE_SSL_REDIRECT", default=not DEBUG, cast=bool)
-RUNNING_ON_RENDER = config("RENDER", default=False, cast=bool)
 TRUST_PROXY_SSL_HEADER = config(
     "TRUST_PROXY_SSL_HEADER",
     default=RUNNING_ON_RENDER,
@@ -185,6 +201,7 @@ SECURE_HSTS_PRELOAD = not DEBUG
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_REFERRER_POLICY = "same-origin"
 X_FRAME_OPTIONS = "DENY"
+SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin"
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = config("EMAIL_HOST", default="")
@@ -199,7 +216,10 @@ RESEND_API_KEY = config("RESEND_API_KEY", default="")
 RESEND_FROM_EMAIL = config("RESEND_FROM_EMAIL", default="")
 RESEND_REPLY_TO_EMAIL = config("RESEND_REPLY_TO_EMAIL", default="")
 RESEND_TIMEOUT_SECONDS = config("RESEND_TIMEOUT_SECONDS", default=8, cast=int)
+CONTACT_RECIPIENT_EMAIL = config("CONTACT_RECIPIENT_EMAIL", default="mindriserwanda@gmail.com")
+CONTACT_EMAIL_SUBJECT_PREFIX = config("CONTACT_EMAIL_SUBJECT_PREFIX", default="[MindRise Contact]")
 EMAIL_VERIFICATION_CODE_TTL_MINUTES = config("EMAIL_VERIFICATION_CODE_TTL_MINUTES", default=15, cast=int)
+EMAIL_VERIFICATION_MAX_ATTEMPTS = config("EMAIL_VERIFICATION_MAX_ATTEMPTS", default=5, cast=int)
 EMAIL_VERIFICATION_RESEND_COOLDOWN_SECONDS = config(
     "EMAIL_VERIFICATION_RESEND_COOLDOWN_SECONDS",
     default=60,

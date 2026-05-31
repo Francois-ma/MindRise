@@ -99,8 +99,7 @@ class _SupportScreenState extends ConsumerState<SupportScreen> {
               children: [
                 const GradientHeader(
                   title: 'Support',
-                  subtitle:
-                      'Private help from AI guidance and care professionals.',
+                  subtitle: 'Private support pathways and care resources.',
                   icon: Icons.chat_bubble_rounded,
                   gradient: LinearGradient(
                     colors: [AppColors.blue, Color(0xFF38BDF8), AppColors.cyan],
@@ -135,14 +134,14 @@ class _SupportScreenState extends ConsumerState<SupportScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'AI Support',
+                                  'Guided Support',
                                   style: theme.textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.w900,
+                                    fontWeight: FontWeight.w700,
                                   ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  'Start a private thread for immediate grounding and next steps.',
+                                  'Start a private support thread for grounding and next steps.',
                                   style: theme.textTheme.bodySmall,
                                 ),
                               ],
@@ -156,13 +155,13 @@ class _SupportScreenState extends ConsumerState<SupportScreen> {
                         minLines: 1,
                         maxLines: 3,
                         decoration: const InputDecoration(
-                          hintText: 'Tell MindRise what is happening...',
+                          hintText: 'Share what kind of support you need...',
                           prefixIcon: Icon(Icons.edit_rounded),
                         ),
                       ),
                       const SizedBox(height: AppSpacing.md),
                       MRButton(
-                        label: 'Start AI Chat',
+                        label: 'Start Support Thread',
                         icon: Icons.chat_rounded,
                         isLoading: _isStartingChat,
                         onPressed: _startAiChat,
@@ -172,9 +171,9 @@ class _SupportScreenState extends ConsumerState<SupportScreen> {
                 ),
                 const SizedBox(height: AppSpacing.xl),
                 Text(
-                  'Licensed Psychologists',
+                  'Care Professionals',
                   style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.md),
@@ -262,7 +261,7 @@ class _DoctorTile extends StatelessWidget {
               children: [
                 Text(
                   practitioner.displayName,
-                  style: const TextStyle(fontWeight: FontWeight.w900),
+                  style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
                 Text(
                   practitioner.specialization,
@@ -351,7 +350,7 @@ class _EmergencyCard extends StatelessWidget {
               SizedBox(width: 10),
               Text(
                 'Need Urgent Help?',
-                style: TextStyle(fontWeight: FontWeight.w900),
+                style: TextStyle(fontWeight: FontWeight.w700),
               ),
             ],
           ),

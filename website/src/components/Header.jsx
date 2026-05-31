@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, NavLink, useLocation } from 'react-router-dom';
-import { ArrowRight, Menu, X } from 'lucide-react';
+import { ArrowRight, LayoutDashboard, Menu, X } from 'lucide-react';
+import { useAuth } from '../auth';
 import { logoMarkUrl, navItems } from './siteConfig';
 
 export function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
+  const auth = useAuth();
 
   useEffect(() => {
     setMenuOpen(false);
@@ -53,6 +55,10 @@ export function Header() {
     setMenuOpen(false);
   }
 
+  const actionTarget = auth.isAuthenticated ? '/app' : '/start';
+  const actionLabel = auth.isAuthenticated ? 'Open app' : 'Get involved';
+  const ActionIcon = auth.isAuthenticated ? LayoutDashboard : ArrowRight;
+
   return (
     <header className="site-header">
       <Link className="brand" to="/" aria-label="MindRise Wellness Initiative home" onClick={closeMenu}>
@@ -63,10 +69,11 @@ export function Header() {
         {navItems.map((item) => (
           <NavLink className={({ isActive }) => (isActive ? 'is-active' : undefined)} key={item.key} to={item.href}>{item.label}</NavLink>
         ))}
+        {auth.isAuthenticated && <NavLink className={({ isActive }) => (isActive ? 'is-active' : undefined)} to="/app">App</NavLink>}
       </nav>
-      <Link className="header-action" to="/start">
-        <span>Get involved</span>
-        <ArrowRight size={18} aria-hidden="true" />
+      <Link className="header-action" to={actionTarget}>
+        <span>{actionLabel}</span>
+        <ActionIcon size={18} aria-hidden="true" />
       </Link>
       <button
         className="icon-button mobile-menu-button"
@@ -78,12 +85,12 @@ export function Header() {
       >
         {menuOpen ? <X size={22} aria-hidden="true" /> : <Menu size={22} aria-hidden="true" />}
       </button>
-      {menuOpen && <MobileMenu onClose={closeMenu} />}
+      {menuOpen && <MobileMenu onClose={closeMenu} isAuthenticated={auth.isAuthenticated} />}
     </header>
   );
 }
 
-function MobileMenu({ onClose }) {
+function MobileMenu({ onClose, isAuthenticated }) {
   if (typeof document === 'undefined') return null;
 
   return createPortal(
@@ -100,7 +107,8 @@ function MobileMenu({ onClose }) {
           {navItems.map((item) => (
             <NavLink className={({ isActive }) => (isActive ? 'is-active' : undefined)} key={item.key} to={item.href} onClick={onClose}>{item.label}</NavLink>
           ))}
-          <NavLink className={({ isActive }) => `mobile-panel__cta${isActive ? ' is-active' : ''}`} to="/start" onClick={onClose}>Get involved</NavLink>
+          {isAuthenticated && <NavLink className={({ isActive }) => (isActive ? 'is-active' : undefined)} to="/app" onClick={onClose}>App</NavLink>}
+          <NavLink className={({ isActive }) => `mobile-panel__cta${isActive ? ' is-active' : ''}`} to={isAuthenticated ? '/app' : '/start'} onClick={onClose}>{isAuthenticated ? 'Open app' : 'Get involved'}</NavLink>
         </div>
       </nav>
     </div>,

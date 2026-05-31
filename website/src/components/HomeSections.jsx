@@ -4,19 +4,23 @@ import {
   ArrowRight,
   BookOpen,
   Building2,
+  CheckCircle2,
   Eye,
   HandHeart,
   HeartPulse,
+  Landmark,
   Loader2,
   Megaphone,
   MessageCircle,
   School,
   ShieldCheck,
+  Smartphone,
   Sparkles,
   UsersRound,
 } from 'lucide-react';
 import { PageHero, SectionIntro } from './Layout';
 import { ProgramCard, Stat } from './Cards';
+import { logoFullUrl } from './siteConfig';
 
 const pathways = [
   {
@@ -43,6 +47,49 @@ const pathways = [
     to: '/start',
     cta: 'Get involved',
   },
+];
+
+const trustSignals = [
+  {
+    icon: ShieldCheck,
+    title: 'Privacy-first digital access',
+    text: 'Account creation, email verification, and protected app access help keep private wellness features reserved for verified users.',
+  },
+  {
+    icon: BookOpen,
+    title: 'Evidence-informed education',
+    text: 'Resources are structured around psychological literacy, prevention, resilience, and practical mental health education.',
+  },
+  {
+    icon: Landmark,
+    title: 'Institution-ready collaboration',
+    text: 'MindRise is shaped for schools, youth groups, community leaders, and partners who need clear, respectful mental health engagement.',
+  },
+];
+
+const impactMetrics = [
+  {
+    value: 'Youth',
+    label: 'Primary audience for literacy, resilience, and emotional well-being programs',
+  },
+  {
+    value: 'Schools',
+    label: 'Outreach-ready program structure for student communities and educators',
+  },
+  {
+    value: 'Rwanda',
+    label: 'Community-centered focus for young people and underserved communities',
+  },
+  {
+    value: 'Digital',
+    label: 'Website and mobile pathways connected to the MindRise backend',
+  },
+];
+
+const mobileSteps = [
+  'Create your MindRise account on the website.',
+  'Verify your email with the code sent to your inbox.',
+  'Open the MindRise web dashboard or mobile app and log in for continuous use.',
 ];
 
 const healingSteps = [
@@ -73,7 +120,7 @@ export function HomeHero({ health }) {
     >
       <div className="hero-actions">
         <Link className="button button--primary" to="/programs"><span>Explore our work</span><ArrowRight size={18} aria-hidden="true" /></Link>
-        <Link className="button button--secondary" to="/about">Our story</Link>
+        <Link className="button button--secondary" to="/start"><Smartphone size={18} aria-hidden="true" /><span>Create account</span></Link>
       </div>
       <div className="hero-proof-list" aria-label="MindRise practice principles">
         <span>Evidence-informed</span>
@@ -83,6 +130,13 @@ export function HomeHero({ health }) {
       <div className={`api-pill api-pill--${health.status}`}>
         {health.status === 'checking' ? <Loader2 className="spin" size={16} aria-hidden="true" /> : <span aria-hidden="true" />}
         {health.message}
+      </div>
+      <div className="hero-assurance-panel" aria-label="Official MindRise pathway">
+        <img src={logoFullUrl} alt="MindRise Wellness Initiative" />
+        <div>
+          <strong>Official digital pathway</strong>
+          <p>Create and verify your account on the website, then use MindRise on the web dashboard or mobile app.</p>
+        </div>
       </div>
     </PageHero>
   );
@@ -110,6 +164,77 @@ export function WhoWeAreSection() {
         <Stat value="Youth" label="Driven by young leaders and lived community needs" />
         <Stat value="Rwanda" label="Focused on young people and underserved communities" />
         <Stat value="Early" label="Prevention, literacy, and early intervention" />
+      </div>
+    </section>
+  );
+}
+
+export function TrustCredibilitySection() {
+  return (
+    <section className="section trust-credibility-section">
+      <SectionIntro
+        eyebrow="Trust and credibility"
+        title="Designed for sensitive work, serious partners, and real community needs."
+        lead="Mental health work needs clarity, privacy, and cultural care. MindRise presents a responsible digital and community pathway for young people, schools, institutions, and partners."
+      />
+      <div className="trust-card-grid">
+        {trustSignals.map((signal) => {
+          const Icon = signal.icon;
+          return (
+            <article className="trust-card" key={signal.title}>
+              <Icon size={24} aria-hidden="true" />
+              <h3>{signal.title}</h3>
+              <p>{signal.text}</p>
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+export function MobileContinuationSection() {
+  return (
+    <section className="mobile-continuation-band" aria-labelledby="mobile-continuation-title">
+      <div className="mobile-continuation-inner">
+        <div className="mobile-continuation-copy">
+          <p className="eyebrow">Website to mobile</p>
+          <h2 id="mobile-continuation-title">Create your account here. Continue MindRise on web or mobile.</h2>
+          <p>The website supports official account creation, email verification, and a private dashboard. Verified users can continue MindRise on the web app or mobile app with the same account.</p>
+          <div className="mobile-actions">
+            <Link className="button button--primary" to="/start"><Smartphone size={18} aria-hidden="true" /><span>Create account</span></Link>
+            <Link className="button button--light" to="/support">Support options</Link>
+          </div>
+        </div>
+        <div className="mobile-step-panel" aria-label="Mobile continuation steps">
+          {mobileSteps.map((step, index) => (
+            <div className="mobile-step" key={step}>
+              <span>{index + 1}</span>
+              <p>{step}</p>
+              {index === mobileSteps.length - 1 && <CheckCircle2 size={20} aria-hidden="true" />}
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export function ImpactReadinessSection() {
+  return (
+    <section className="section impact-section">
+      <SectionIntro
+        eyebrow="Impact framework"
+        title="A structure ready for programs, partnerships, and measurable community growth."
+        lead="MindRise can present program progress clearly as outreach expands, keeping the website prepared for schools, partners, funders, and community stakeholders."
+      />
+      <div className="impact-grid">
+        {impactMetrics.map((metric) => (
+          <article className="impact-card" key={metric.value}>
+            <strong>{metric.value}</strong>
+            <p>{metric.label}</p>
+          </article>
+        ))}
       </div>
     </section>
   );

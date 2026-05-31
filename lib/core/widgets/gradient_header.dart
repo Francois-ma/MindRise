@@ -32,13 +32,13 @@ class GradientHeader extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.xl),
       decoration: BoxDecoration(
         gradient: gradient,
-        borderRadius: BorderRadius.circular(26),
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(color: Colors.white.withValues(alpha: .18)),
         boxShadow: [
           BoxShadow(
             color: AppColors.ink.withValues(alpha: .14),
-            blurRadius: 28,
-            offset: const Offset(0, 18),
+            blurRadius: 22,
+            offset: const Offset(0, 12),
           ),
         ],
       ),
@@ -70,8 +70,8 @@ class GradientHeader extends StatelessWidget {
                   title,
                   style: theme.textTheme.headlineSmall?.copyWith(
                     color: Colors.white,
-                    fontWeight: FontWeight.w900,
-                    fontSize: largeTitle ? 30 : null,
+                    fontWeight: FontWeight.w700,
+                    fontSize: largeTitle ? 28 : null,
                     height: 1.08,
                   ),
                 ),

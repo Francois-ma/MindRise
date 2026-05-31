@@ -123,7 +123,7 @@ class _InsightsContent extends StatelessWidget {
               Text(
                 'Mood Trend',
                 style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
               const SizedBox(height: AppSpacing.lg),
@@ -139,9 +139,9 @@ class _InsightsContent extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.xl),
         Text(
-          'AI Mood Insights',
+          'Personalized Insights',
           style: theme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w700,
           ),
         ),
         const SizedBox(height: AppSpacing.md),
@@ -149,7 +149,7 @@ class _InsightsContent extends StatelessWidget {
           data: (insights) {
             if (insights.cards.isEmpty) {
               return const MRCard(
-                child: Text('Log a mood to receive AI-personalized insights.'),
+                child: Text('Log a mood to receive personalized insights.'),
               );
             }
             return Column(
@@ -161,10 +161,11 @@ class _InsightsContent extends StatelessWidget {
               ],
             );
           },
-          loading: () =>
-              const InlineLoadingCard(message: 'Generating AI insights...'),
+          loading: () => const InlineLoadingCard(
+            message: 'Building personalized insights...',
+          ),
           error: (error, stackTrace) => InlineErrorCard(
-            title: 'AI insights unavailable',
+            title: 'Insights unavailable',
             error: error,
             onRetry: onRetryInsights,
           ),
@@ -203,7 +204,7 @@ class _MetricCard extends StatelessWidget {
             value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 4),
           Text(label, style: Theme.of(context).textTheme.labelSmall),
@@ -339,7 +340,7 @@ class _AiInsightTile extends StatelessWidget {
                     Text(
                       card.title,
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w900,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                     const SizedBox(height: 6),

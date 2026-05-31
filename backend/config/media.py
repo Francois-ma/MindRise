@@ -18,6 +18,9 @@ def serve_media_file(request, path: str):
     except ValueError as exc:
         raise Http404 from exc
 
+    if not _is_public_media_path(media_root, requested_path):
+        raise Http404
+
     if not requested_path.is_file():
         raise Http404
 
@@ -26,3 +29,17 @@ def serve_media_file(request, path: str):
         requested_path.open("rb"),
         content_type=content_type or "application/octet-stream",
     )
+
+
+def _is_public_media_path(media_root: Path, requested_path: Path) -> bool:
+    for prefix in settings.PUBLIC_MEDIA_PREFIXES:
+        clean_prefix = str(prefix).strip().strip("/\\")
+        if not clean_prefix:
+            continue
+        public_root = (media_root / clean_prefix).resolve()
+        try:
+            requested_path.relative_to(public_root)
+        except ValueError:
+            continue
+        return True
+    return False

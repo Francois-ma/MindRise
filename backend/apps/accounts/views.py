@@ -1,7 +1,9 @@
 from django.db import transaction
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
+from rest_framework.settings import api_settings
 from rest_framework.throttling import ScopedRateThrottle
+from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenRefreshView
 
@@ -104,8 +106,11 @@ class LogoutView(generics.GenericAPIView):
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        token = RefreshToken(serializer.validated_data["refresh"])
-        token.blacklist()
+        try:
+            token = RefreshToken(serializer.validated_data["refresh"])
+            token.blacklist()
+        except TokenError:
+            pass
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -130,7 +135,13 @@ class PasswordChangeView(generics.GenericAPIView):
 
 
 def _client_ip(request) -> str | None:
-    forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
-    if forwarded_for:
-        return forwarded_for.split(",")[0].strip()
-    return request.META.get("REMOTE_ADDR")
+    remote_addr = request.META.get("REMOTE_ADDR")
+    forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR", "")
+    addresses = [address.strip() for address in forwarded_for.split(",") if address.strip()]
+    num_proxies = api_settings.NUM_PROXIES
+
+    if not addresses or num_proxies is None or num_proxies <= 0:
+        return remote_addr
+    if len(addresses) > num_proxies:
+        return addresses[-(num_proxies + 1)]
+    return addresses[0]

@@ -55,7 +55,7 @@ class InlineErrorCard extends StatelessWidget {
                 child: Text(
                   title,
                   style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),

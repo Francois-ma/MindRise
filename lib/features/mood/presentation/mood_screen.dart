@@ -131,7 +131,7 @@ class _MoodScreenState extends ConsumerState<MoodScreen> {
                       Text(
                         'Select your mood',
                         style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                       const SizedBox(height: AppSpacing.lg),
@@ -185,7 +185,7 @@ class _MoodScreenState extends ConsumerState<MoodScreen> {
                           Text(
                             'Intensity',
                             style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w800,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                           const Spacer(),
@@ -193,7 +193,7 @@ class _MoodScreenState extends ConsumerState<MoodScreen> {
                             '${_score.round()}/10',
                             style: theme.textTheme.titleMedium?.copyWith(
                               color: AppColors.emerald,
-                              fontWeight: FontWeight.w900,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                         ],
@@ -236,7 +236,7 @@ class _MoodScreenState extends ConsumerState<MoodScreen> {
                     Text(
                       'Recent Entries',
                       style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ],
@@ -319,14 +319,14 @@ class _SelectedMoodInsight extends StatelessWidget {
                   card.title,
                   style: Theme.of(
                     context,
-                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900),
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 6),
                 Text(card.message),
                 const SizedBox(height: 10),
                 Text(
                   card.action,
-                  style: TextStyle(color: color, fontWeight: FontWeight.w800),
+                  style: TextStyle(color: color, fontWeight: FontWeight.w700),
                 ),
               ],
             ),
@@ -440,7 +440,7 @@ class _RecentMood extends StatelessWidget {
                     Expanded(
                       child: Text(
                         '${option.label} · ${entry.score}/10',
-                        style: const TextStyle(fontWeight: FontWeight.w800),
+                        style: const TextStyle(fontWeight: FontWeight.w700),
                       ),
                     ),
                     Text(

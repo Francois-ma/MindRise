@@ -116,7 +116,7 @@ class HomeScreen extends ConsumerWidget {
                 Text(
                   'Quick Actions',
                   style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.md),
@@ -239,7 +239,7 @@ class _TrustItem extends StatelessWidget {
           textAlign: TextAlign.center,
           style: Theme.of(
             context,
-          ).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w800),
+          ).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w700),
         ),
       ],
     );
@@ -267,7 +267,7 @@ class _CarePlanCard extends StatelessWidget {
                 child: Text(
                   'Today\'s care path',
                   style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w900,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
@@ -376,7 +376,7 @@ class _SnapshotMetric extends StatelessWidget {
         Text(
           value,
           style: theme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.w900,
+            fontWeight: FontWeight.w700,
           ),
         ),
         const SizedBox(height: 2),
@@ -463,7 +463,7 @@ class _ActionTile extends StatelessWidget {
               label,
               style: const TextStyle(
                 color: Colors.white,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ],

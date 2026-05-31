@@ -11,25 +11,57 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
   );
 });
 
+enum AppUserRole {
+  patient,
+  practitioner,
+  admin,
+  unknown;
+
+  static AppUserRole fromApi(Object? value) {
+    return switch (value?.toString().toLowerCase()) {
+      'patient' => AppUserRole.patient,
+      'practitioner' => AppUserRole.practitioner,
+      'admin' => AppUserRole.admin,
+      _ => AppUserRole.unknown,
+    };
+  }
+}
+
 class AppUser {
   const AppUser({
     required this.id,
     required this.name,
     required this.email,
+    required this.role,
     required this.isEmailVerified,
   });
 
   final int id;
   final String name;
   final String email;
+  final AppUserRole role;
   final bool isEmailVerified;
 
   factory AppUser.fromJson(Map<String, dynamic> json) {
+    final firstName = json['first_name']?.toString().trim() ?? '';
+    final lastName = json['last_name']?.toString().trim() ?? '';
+    final fullName = '$firstName $lastName'.trim();
+    final apiName = json['name']?.toString().trim() ?? '';
+    final email = json['email']?.toString().trim() ?? '';
+    final displayName = apiName.isNotEmpty
+        ? apiName
+        : fullName.isNotEmpty
+        ? fullName
+        : email.isNotEmpty
+        ? email
+        : 'MindRise member';
+
     return AppUser(
       id: (json['id'] as num?)?.toInt() ?? 0,
-      name: (json['name'] ?? json['first_name'] ?? 'Francois').toString(),
-      email: (json['email'] ?? 'francois@mindrise.com').toString(),
-      isEmailVerified: json['is_email_verified'] != false,
+      name: displayName,
+      email: email,
+      role: AppUserRole.fromApi(json['role']),
+      isEmailVerified: json['is_email_verified'] == true,
     );
   }
 }
@@ -79,7 +111,7 @@ class AuthRepository {
       '/auth/login/',
       data: {'email': email, 'password': password},
     );
-    return _persistAuthResponse(response.data, fallbackEmail: email);
+    return _persistAuthResponse(response.data);
   }
 
   Future<RegistrationResult> register({
@@ -107,7 +139,7 @@ class AuthRepository {
       '/auth/email/verify/',
       data: {'email': email, 'code': code},
     );
-    return _persistAuthResponse(response.data, fallbackEmail: email);
+    return _persistAuthResponse(response.data);
   }
 
   Future<void> resendVerificationCode({required String email}) async {
@@ -129,11 +161,7 @@ class AuthRepository {
     await _tokenStorage.clear();
   }
 
-  Future<AppUser> _persistAuthResponse(
-    Map<String, dynamic>? data, {
-    String? fallbackName,
-    required String fallbackEmail,
-  }) async {
+  Future<AppUser> _persistAuthResponse(Map<String, dynamic>? data) async {
     final access =
         data?['access']?.toString() ?? data?['access_token']?.toString();
     final refresh =
@@ -144,16 +172,16 @@ class AuthRepository {
       );
     }
 
+    final userJson = data?['user'];
+    if (userJson is! Map<String, dynamic>) {
+      throw const ApiException(
+        'Authentication response did not include the user profile.',
+      );
+    }
+
     await _tokenStorage.save(
       AuthTokens(accessToken: access, refreshToken: refresh),
     );
-    final userJson = data?['user'];
-    if (userJson is Map<String, dynamic>) return AppUser.fromJson(userJson);
-    return AppUser(
-      id: 0,
-      name: fallbackName ?? 'Francois',
-      email: fallbackEmail,
-      isEmailVerified: true,
-    );
+    return AppUser.fromJson(userJson);
   }
 }

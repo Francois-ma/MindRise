@@ -68,17 +68,20 @@ class LearningCategory {
     required this.id,
     required this.name,
     required this.slug,
+    required this.description,
   });
 
   final int id;
   final String name;
   final String slug;
+  final String description;
 
   factory LearningCategory.fromJson(Map<String, dynamic> json) {
     return LearningCategory(
       id: (json['id'] as num?)?.toInt() ?? 0,
       name: json['name']?.toString() ?? '',
       slug: json['slug']?.toString() ?? '',
+      description: json['description']?.toString() ?? '',
     );
   }
 }
@@ -88,6 +91,7 @@ class Article {
     required this.id,
     required this.title,
     required this.summary,
+    required this.body,
     required this.category,
     required this.readTimeMinutes,
     required this.isBookmarked,
@@ -96,6 +100,7 @@ class Article {
   final int id;
   final String title;
   final String summary;
+  final String body;
   final String category;
   final int readTimeMinutes;
   final bool isBookmarked;
@@ -106,6 +111,7 @@ class Article {
       id: (json['id'] as num?)?.toInt() ?? 0,
       title: json['title']?.toString() ?? '',
       summary: json['summary']?.toString() ?? '',
+      body: json['body']?.toString() ?? '',
       category: category is Map<String, dynamic>
           ? category['name']?.toString() ?? ''
           : '',

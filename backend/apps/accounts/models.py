@@ -84,6 +84,7 @@ class EmailVerificationChallenge(models.Model):
     expires_at = models.DateTimeField()
     sent_at = models.DateTimeField(auto_now_add=True)
     used_at = models.DateTimeField(null=True, blank=True)
+    failed_attempts = models.PositiveSmallIntegerField(default=0)
     delivery_provider = models.CharField(max_length=32, default="resend")
     provider_message_id = models.CharField(max_length=128, blank=True)
     request_ip = models.GenericIPAddressField(null=True, blank=True)

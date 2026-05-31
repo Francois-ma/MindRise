@@ -77,7 +77,7 @@ class LearnScreen extends ConsumerWidget {
                 Text(
                   'Explore Topics',
                   style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.md),
@@ -93,15 +93,9 @@ class LearnScreen extends ConsumerWidget {
                         for (final category in items)
                           ActionChip(
                             label: Text(category.name),
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    'Showing ${category.name} resources soon.',
-                                  ),
-                                ),
-                              );
-                            },
+                            onPressed: () =>
+                                _showCategorySheet(context, category),
+
                             backgroundColor: AppColors.emerald.withValues(
                               alpha: .10,
                             ),
@@ -123,7 +117,7 @@ class LearnScreen extends ConsumerWidget {
                 Text(
                   'Uploaded Materials',
                   style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.md),
@@ -154,7 +148,7 @@ class LearnScreen extends ConsumerWidget {
                 Text(
                   'Featured Articles',
                   style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.md),
@@ -188,6 +182,112 @@ class LearnScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+void _showCategorySheet(BuildContext context, LearningCategory category) {
+  showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    isScrollControlled: true,
+    builder: (context) {
+      final theme = Theme.of(context);
+      return SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                category.name,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                category.description.isNotEmpty
+                    ? category.description
+                    : 'Resources in this topic will appear in the library as they are published by MindRise.',
+                style: theme.textTheme.bodyMedium,
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+
+void _showArticleSheet(BuildContext context, Article article) {
+  showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    isScrollControlled: true,
+    builder: (context) {
+      final theme = Theme.of(context);
+      final articleBody = article.body.trim().isNotEmpty
+          ? article.body.trim()
+          : article.summary.trim();
+      return DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: .82,
+        minChildSize: .45,
+        maxChildSize: .94,
+        builder: (context, scrollController) {
+          return ListView(
+            controller: scrollController,
+            padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),
+            children: [
+              if (article.category.isNotEmpty)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Chip(
+                    label: Text(article.category),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ),
+              const SizedBox(height: 8),
+              Text(
+                article.title,
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const Icon(Icons.schedule_rounded, size: 16),
+                  const SizedBox(width: 6),
+                  Text(
+                    '${article.readTimeMinutes} min read',
+                    style: theme.textTheme.labelSmall,
+                  ),
+                ],
+              ),
+              if (article.summary.isNotEmpty) ...[
+                const SizedBox(height: 18),
+                Text(
+                  article.summary,
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    height: 1.45,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 20),
+              Text(
+                articleBody.isEmpty
+                    ? 'This article is being prepared by MindRise.'
+                    : articleBody,
+                style: theme.textTheme.bodyMedium?.copyWith(height: 1.58),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
 }
 
 class _LearningMaterialTile extends StatelessWidget {
@@ -271,7 +371,7 @@ class _LearningMaterialTile extends StatelessWidget {
                 Text(
                   material.title,
                   style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
                 if (material.summary.isNotEmpty) ...[
@@ -364,11 +464,7 @@ class _ArticleTile extends ConsumerWidget {
 
     return MRCard(
       padding: const EdgeInsets.all(18),
-      onTap: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Article reading view is coming soon.')),
-        );
-      },
+      onTap: () => _showArticleSheet(context, article),
       child: Row(
         children: [
           Expanded(
@@ -378,7 +474,7 @@ class _ArticleTile extends ConsumerWidget {
                 Text(
                   article.title,
                   style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
                 if (article.summary.isNotEmpty) ...[

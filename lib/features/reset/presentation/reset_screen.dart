@@ -142,7 +142,7 @@ class _ResetScreenState extends State<ResetScreen>
                 'Quick Affirmations',
                 style: Theme.of(
                   context,
-                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: AppSpacing.md),
               for (final affirmation in const [
@@ -244,7 +244,7 @@ class _ResetScreenState extends State<ResetScreen>
                   _remainingSeconds == 0 ? 'Breathe' : '$minutes:$seconds',
                   style: const TextStyle(
                     color: Colors.white,
-                    fontWeight: FontWeight.w900,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
@@ -399,7 +399,7 @@ class _ActivityTile extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(fontWeight: FontWeight.w900),
+                  style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 4),
                 Text(description, style: Theme.of(context).textTheme.bodySmall),
@@ -442,7 +442,7 @@ class _MeditationTile extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(fontWeight: FontWeight.w900),
+                  style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
                 Text(description, style: Theme.of(context).textTheme.bodySmall),
               ],

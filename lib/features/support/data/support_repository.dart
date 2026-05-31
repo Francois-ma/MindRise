@@ -55,7 +55,7 @@ class SupportRepository {
   Future<void> startAiThread(String message) async {
     final thread = await _dio.post<Map<String, dynamic>>(
       '/support/threads/',
-      data: {'thread_type': 'ai', 'subject': 'MindRise AI Coach'},
+      data: {'thread_type': 'ai', 'subject': 'MindRise Support'},
     );
     final threadId = thread.data?['id'];
     if (threadId != null) {

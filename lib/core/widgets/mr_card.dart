@@ -21,14 +21,14 @@ class MRCard extends StatelessWidget {
 
     final card = DecoratedBox(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
             color: isDark
                 ? Colors.black.withValues(alpha: .18)
                 : const Color(0xFF163A34).withValues(alpha: .07),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -36,17 +36,17 @@ class MRCard extends StatelessWidget {
         color: gradient == null
             ? (isDark ? theme.colorScheme.surfaceContainer : Colors.white)
             : Colors.transparent,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(18),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(18),
           child: Ink(
             width: double.infinity,
             padding: padding,
             decoration: BoxDecoration(
               gradient: gradient,
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(18),
               border: Border.all(color: theme.colorScheme.outlineVariant),
             ),
             child: child,

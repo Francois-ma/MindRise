@@ -124,3 +124,47 @@ def test_unauthenticated_profile_is_rejected():
     response = client.get(reverse("auth-me"))
 
     assert response.status_code == 401
+
+@pytest.mark.django_db
+def test_email_verification_code_locks_after_repeated_failures(monkeypatch, settings):
+    settings.EMAIL_VERIFICATION_MAX_ATTEMPTS = 2
+    client = APIClient()
+    monkeypatch.setattr(
+        "apps.accounts.services.generate_email_verification_code",
+        lambda: "123456",
+    )
+    monkeypatch.setattr(
+        "apps.accounts.services.ResendEmailClient.send_email",
+        lambda *args, **kwargs: "resend-message-id",
+    )
+    client.post(
+        reverse("auth-register"),
+        {
+            "name": "Lock Test",
+            "email": "lock@example.com",
+            "password": "MindRiseStrong123!",
+            "accepted_terms": True,
+        },
+        format="json",
+    )
+
+    for _ in range(2):
+        response = client.post(
+            reverse("auth-email-verify"),
+            {"email": "lock@example.com", "code": "000000"},
+            format="json",
+        )
+        assert response.status_code == 400
+
+    response = client.post(
+        reverse("auth-email-verify"),
+        {"email": "lock@example.com", "code": "123456"},
+        format="json",
+    )
+
+    assert response.status_code == 400
+    user = get_user_model().objects.get(email="lock@example.com")
+    challenge = EmailVerificationChallenge.objects.get(user=user)
+    assert user.is_email_verified is False
+    assert challenge.failed_attempts == 2
+    assert challenge.used_at is not None

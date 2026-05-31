@@ -24,19 +24,26 @@ class AuthState {
 
   bool get isAuthenticated => status == AuthStatus.authenticated;
   bool get isLoading => status == AuthStatus.loading;
+  bool get isAuthorized => isAuthenticated && (user?.isEmailVerified ?? false);
 
   AuthState copyWith({
     AuthStatus? status,
     AppUser? user,
     String? errorMessage,
     String? pendingVerificationEmail,
+    bool clearUser = false,
+    bool clearErrorMessage = false,
+    bool clearPendingVerificationEmail = false,
   }) {
     return AuthState(
       status: status ?? this.status,
-      user: user ?? this.user,
-      errorMessage: errorMessage,
-      pendingVerificationEmail:
-          pendingVerificationEmail ?? this.pendingVerificationEmail,
+      user: clearUser ? null : user ?? this.user,
+      errorMessage: clearErrorMessage
+          ? null
+          : errorMessage ?? this.errorMessage,
+      pendingVerificationEmail: clearPendingVerificationEmail
+          ? null
+          : pendingVerificationEmail ?? this.pendingVerificationEmail,
     );
   }
 }
@@ -58,12 +65,16 @@ class AuthController extends Notifier<AuthState> {
     if (user == null) {
       state = const AuthState(status: AuthStatus.unauthenticated);
     } else {
-      state = AuthState(status: AuthStatus.authenticated, user: user);
+      state = AuthState(
+        status: AuthStatus.authenticated,
+        user: user,
+        pendingVerificationEmail: user.isEmailVerified ? null : user.email,
+      );
     }
   }
 
   Future<bool> login(String email, String password) async {
-    state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
+    state = const AuthState(status: AuthStatus.loading);
     try {
       final user = await _repository.login(email: email, password: password);
       state = AuthState(status: AuthStatus.authenticated, user: user);
@@ -84,7 +95,7 @@ class AuthController extends Notifier<AuthState> {
   }
 
   Future<String?> register(String name, String email, String password) async {
-    state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
+    state = const AuthState(status: AuthStatus.loading);
     try {
       final result = await _repository.register(
         name: name,
@@ -112,7 +123,10 @@ class AuthController extends Notifier<AuthState> {
   }
 
   Future<bool> verifyEmail(String email, String code) async {
-    state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
+    state = AuthState(
+      status: AuthStatus.loading,
+      pendingVerificationEmail: email,
+    );
     try {
       final user = await _repository.verifyEmail(email: email, code: code);
       state = AuthState(status: AuthStatus.authenticated, user: user);
@@ -135,7 +149,10 @@ class AuthController extends Notifier<AuthState> {
   }
 
   Future<bool> resendVerificationCode(String email) async {
-    state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
+    state = AuthState(
+      status: AuthStatus.loading,
+      pendingVerificationEmail: email,
+    );
     try {
       await _repository.resendVerificationCode(email: email);
       state = AuthState(

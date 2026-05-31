@@ -104,7 +104,7 @@ class AppTheme {
         margin: EdgeInsets.zero,
         color: isDark ? AppColors.cardDark : Colors.white,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(18),
           side: BorderSide(color: scheme.outlineVariant),
         ),
       ),
@@ -142,16 +142,16 @@ class AppTheme {
           foregroundColor: Colors.white,
           backgroundColor: AppColors.emerald,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(14),
           ),
-          textStyle: const TextStyle(fontWeight: FontWeight.w700),
+          textStyle: const TextStyle(fontWeight: FontWeight.w600),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           minimumSize: const Size.fromHeight(52),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(14),
           ),
         ),
       ),
@@ -173,7 +173,7 @@ class AppTheme {
           (states) => TextStyle(
             fontSize: 11,
             fontWeight: states.contains(WidgetState.selected)
-                ? FontWeight.w700
+                ? FontWeight.w600
                 : FontWeight.w500,
           ),
         ),
@@ -212,22 +212,22 @@ class AppTheme {
         .copyWith(
           headlineLarge: base.headlineLarge?.copyWith(
             color: color,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w700,
             letterSpacing: 0,
           ),
           headlineSmall: base.headlineSmall?.copyWith(
             color: color,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w700,
             letterSpacing: 0,
           ),
           titleLarge: base.titleLarge?.copyWith(
             color: color,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w700,
             letterSpacing: 0,
           ),
           titleMedium: base.titleMedium?.copyWith(
             color: color,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w600,
             letterSpacing: 0,
           ),
           bodyMedium: base.bodyMedium?.copyWith(color: color, letterSpacing: 0),
@@ -238,7 +238,7 @@ class AppTheme {
 
   static OutlineInputBorder _inputBorder(Color color, {double width = 1}) {
     return OutlineInputBorder(
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(14),
       borderSide: BorderSide(color: color, width: width),
     );
   }

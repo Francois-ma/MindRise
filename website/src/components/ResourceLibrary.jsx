@@ -115,7 +115,7 @@ function MaterialsRow({ materials }) {
   return (
     <div className="materials-row">
       {materials.map((material) => (
-        <a key={material.id || material.slug || material.title} href={material.material_url || material.external_url || '#'} target="_blank" rel="noreferrer">
+        <a key={material.id || material.slug || material.title} href={material.material_url || material.external_url || '#'} target="_blank" rel="noopener noreferrer">
           <ExternalLink size={16} aria-hidden="true" />
           <span>{material.title}</span>
         </a>

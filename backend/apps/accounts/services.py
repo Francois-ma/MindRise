@@ -56,6 +56,7 @@ class ResendEmailClient:
         text: str,
         html: str,
         idempotency_key: str,
+        reply_to_email: str | None = None,
     ) -> str:
         if not self.is_configured:
             if settings.DEBUG:
@@ -74,8 +75,9 @@ class ResendEmailClient:
             "text": text,
             "html": html,
         }
-        if settings.RESEND_REPLY_TO_EMAIL:
-            payload["reply_to"] = settings.RESEND_REPLY_TO_EMAIL
+        reply_to = reply_to_email or settings.RESEND_REPLY_TO_EMAIL
+        if reply_to:
+            payload["reply_to"] = reply_to
 
         request = urllib.request.Request(  # noqa: S310 - RESEND_API_URL is validated as HTTPS above.
             f"{self.api_url}/emails",
@@ -95,7 +97,7 @@ class ResendEmailClient:
         except urllib.error.HTTPError as exc:
             error_body = exc.read().decode("utf-8", errors="replace")
             logger.error(
-                "Resend rejected verification email. status=%s reason=%s body=%s",
+                "Resend rejected email. status=%s reason=%s body=%s",
                 exc.code,
                 exc.reason,
                 error_body,
@@ -174,14 +176,27 @@ def verify_email_code(*, email: str, code: str) -> User:
     except User.DoesNotExist as exc:
         raise ValidationError("Invalid or expired verification code.") from exc
 
-    challenge = user.email_verification_challenges.filter(
-        used_at__isnull=True,
-        expires_at__gt=timezone.now(),
-    ).first()
-    if challenge is None or not challenge.matches_code(code):
-        raise ValidationError("Invalid or expired verification code.")
-
     with transaction.atomic():
+        challenge = user.email_verification_challenges.select_for_update().filter(
+            used_at__isnull=True,
+            expires_at__gt=timezone.now(),
+        ).first()
+        if challenge is None:
+            raise ValidationError("Invalid or expired verification code.")
+
+        if challenge.failed_attempts >= settings.EMAIL_VERIFICATION_MAX_ATTEMPTS:
+            challenge.mark_used()
+            raise ValidationError("Invalid or expired verification code.")
+
+        if not challenge.matches_code(code):
+            challenge.failed_attempts += 1
+            update_fields = ["failed_attempts"]
+            if challenge.failed_attempts >= settings.EMAIL_VERIFICATION_MAX_ATTEMPTS:
+                challenge.used_at = timezone.now()
+                update_fields.append("used_at")
+            challenge.save(update_fields=update_fields)
+            raise ValidationError("Invalid or expired verification code.")
+
         challenge.mark_used()
         user.is_email_verified = True
         user.save(update_fields=("is_email_verified", "updated_at"))

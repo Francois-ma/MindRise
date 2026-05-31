@@ -7,7 +7,10 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/app_background.dart';
 import '../../../core/widgets/gradient_header.dart';
 import '../../../core/widgets/mr_card.dart';
+import '../../../core/widgets/screen_state.dart';
+import '../../auth/data/auth_repository.dart';
 import '../../auth/presentation/auth_controller.dart';
+import '../../mood/data/mood_repository.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -16,6 +19,7 @@ class ProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final auth = ref.watch(authControllerProvider);
     final user = auth.user;
+    final summary = ref.watch(moodSummaryProvider);
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -27,125 +31,58 @@ class ProfileScreen extends ConsumerWidget {
               sliver: SliverList.list(
                 children: [
                   GradientHeader(
-                    title: user?.name ?? 'Francois',
-                    subtitle: user?.email ?? 'francois@mindrise.com',
-                    icon: Icons.person_rounded,
+                    title: user?.name ?? 'MindRise member',
+                    subtitle: user?.email ?? 'Authenticated account',
+                    icon: Icons.verified_user_rounded,
                     leading: IconButton(
                       onPressed: () => context.go('/home'),
                       tooltip: 'Back',
                       icon: const Icon(Icons.arrow_back_rounded),
                       color: Colors.white,
                     ),
-                    trailing: IconButton.filledTonal(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Profile editing is coming soon.'),
-                          ),
-                        );
-                      },
-                      tooltip: 'Edit profile',
-                      icon: const Icon(Icons.edit_rounded),
-                      style: IconButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        backgroundColor: Colors.white.withValues(alpha: .20),
-                      ),
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+                  _AccountStatusCard(user: user),
+                  const SizedBox(height: AppSpacing.xl),
+                  summary.when(
+                    data: (data) => _WellnessStats(summary: data),
+                    loading: () => const InlineLoadingCard(
+                      message: 'Loading your wellness record...',
+                    ),
+                    error: (error, stackTrace) => InlineErrorCard(
+                      title: 'Wellness record unavailable',
+                      error: error,
+                      onRetry: () => ref.invalidate(moodSummaryProvider),
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xl),
-                  const Row(
+                  _AccountSection(
+                    title: 'Account Access',
                     children: [
-                      Expanded(
-                        child: _ProfileStat(
-                          label: 'Current Streak',
-                          value: '7 days',
-                          icon: Icons.workspace_premium_rounded,
-                        ),
+                      _AccountRow(
+                        icon: Icons.mail_rounded,
+                        label: 'Email',
+                        value: user?.email ?? 'Not available',
                       ),
-                      SizedBox(width: AppSpacing.md),
-                      Expanded(
-                        child: _ProfileStat(
-                          label: 'Total Entries',
-                          value: '42',
-                          icon: Icons.calendar_month_rounded,
-                        ),
+                      _AccountRow(
+                        icon: Icons.badge_rounded,
+                        label: 'Role',
+                        value: _roleLabel(user?.role),
                       ),
-                      SizedBox(width: AppSpacing.md),
-                      Expanded(
-                        child: _ProfileStat(
-                          label: 'Mood Average',
-                          value: '7.2/10',
-                          icon: Icons.favorite_rounded,
-                        ),
+                      _AccountRow(
+                        icon: Icons.verified_rounded,
+                        label: 'Verification',
+                        value: user?.isEmailVerified == true
+                            ? 'Verified'
+                            : 'Verification required',
+                        valueColor: user?.isEmailVerified == true
+                            ? AppColors.emerald
+                            : theme.colorScheme.error,
                       ),
                     ],
                   ),
                   const SizedBox(height: AppSpacing.xl),
-                  _SettingsSection(
-                    title: 'Preferences',
-                    children: [
-                      _SettingsTile(
-                        icon: Icons.notifications_rounded,
-                        label: 'Notifications',
-                        trailing: Switch(
-                          value: true,
-                          onChanged: (_) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Notification settings are coming soon.',
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      _SettingsTile(
-                        icon: Icons.calendar_today_rounded,
-                        label: 'Daily Reminders',
-                        trailing: Switch(
-                          value: true,
-                          onChanged: (_) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Reminder settings are coming soon.',
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      const _SettingsTile(
-                        icon: Icons.settings_rounded,
-                        label: 'App Settings',
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
-                  const _SettingsSection(
-                    title: 'Account',
-                    children: [
-                      _SettingsTile(
-                        icon: Icons.lock_rounded,
-                        label: 'Privacy & Security',
-                      ),
-                      _SettingsTile(
-                        icon: Icons.person_rounded,
-                        label: 'Personal Information',
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
-                  const _SettingsSection(
-                    title: 'Support',
-                    children: [
-                      _SettingsTile(
-                        icon: Icons.help_rounded,
-                        label: 'Help Center',
-                      ),
-                    ],
-                  ),
+                  const _PrivacyCard(),
                   const SizedBox(height: AppSpacing.xl),
                   OutlinedButton.icon(
                     onPressed: () async {
@@ -179,6 +116,155 @@ class ProfileScreen extends ConsumerWidget {
   }
 }
 
+class _AccountStatusCard extends StatelessWidget {
+  const _AccountStatusCard({required this.user});
+
+  final AppUser? user;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final verified = user?.isEmailVerified == true;
+
+    return MRCard(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CircleAvatar(
+            radius: 25,
+            backgroundColor: verified
+                ? AppColors.emerald
+                : theme.colorScheme.errorContainer,
+            child: Icon(
+              verified ? Icons.lock_rounded : Icons.lock_open_rounded,
+              color: verified
+                  ? Colors.white
+                  : theme.colorScheme.onErrorContainer,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  verified ? 'Secure account' : 'Verification required',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  verified
+                      ? 'Your MindRise account is authorized for private wellness features.'
+                      : 'Verify your email before using private wellness features.',
+                  style: theme.textTheme.bodySmall,
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _StatusChip(
+                      icon: Icons.verified_user_rounded,
+                      label: verified ? 'Verified' : 'Pending',
+                      color: verified
+                          ? AppColors.emerald
+                          : theme.colorScheme.error,
+                    ),
+                    _StatusChip(
+                      icon: Icons.badge_rounded,
+                      label: _roleLabel(user?.role),
+                      color: AppColors.teal,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatusChip extends StatelessWidget {
+  const _StatusChip({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: .10),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: .28)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 15, color: color),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: color,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _WellnessStats extends StatelessWidget {
+  const _WellnessStats({required this.summary});
+
+  final MoodSummary summary;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: _ProfileStat(
+            label: 'Average',
+            value: summary.averageScore == 0
+                ? '--'
+                : summary.averageScore.toStringAsFixed(1),
+            icon: Icons.monitor_heart_rounded,
+          ),
+        ),
+        const SizedBox(width: AppSpacing.md),
+        Expanded(
+          child: _ProfileStat(
+            label: 'Entries',
+            value: summary.totalEntries.toString(),
+            icon: Icons.calendar_month_rounded,
+          ),
+        ),
+        const SizedBox(width: AppSpacing.md),
+        Expanded(
+          child: _ProfileStat(
+            label: 'Top mood',
+            value: _formatMood(summary.mostFrequentMood),
+            icon: Icons.psychology_alt_rounded,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _ProfileStat extends StatelessWidget {
   const _ProfileStat({
     required this.label,
@@ -200,12 +286,16 @@ class _ProfileStat extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontWeight: FontWeight.w900),
+            style: const TextStyle(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 4),
           Text(
             label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.labelSmall,
           ),
@@ -215,8 +305,8 @@ class _ProfileStat extends StatelessWidget {
   }
 }
 
-class _SettingsSection extends StatelessWidget {
-  const _SettingsSection({required this.title, required this.children});
+class _AccountSection extends StatelessWidget {
+  const _AccountSection({required this.title, required this.children});
 
   final String title;
   final List<Widget> children;
@@ -232,12 +322,12 @@ class _SettingsSection extends StatelessWidget {
             title,
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ),
         MRCard(
-          padding: const EdgeInsets.symmetric(vertical: 6),
+          padding: EdgeInsets.zero,
           child: Column(children: children),
         ),
       ],
@@ -245,25 +335,106 @@ class _SettingsSection extends StatelessWidget {
   }
 }
 
-class _SettingsTile extends StatelessWidget {
-  const _SettingsTile({required this.icon, required this.label, this.trailing});
+class _AccountRow extends StatelessWidget {
+  const _AccountRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+    this.valueColor,
+  });
 
   final IconData icon;
   final String label;
-  final Widget? trailing;
+  final String value;
+  final Color? valueColor;
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      leading: Icon(icon),
-      title: Text(label),
-      trailing: trailing ?? const Icon(Icons.chevron_right_rounded),
-      minVerticalPadding: 12,
-      onTap: () {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('$label is coming soon.')));
-      },
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      child: Row(
+        children: [
+          Icon(icon, color: AppColors.emerald),
+          const SizedBox(width: 12),
+          Expanded(child: Text(label, style: theme.textTheme.bodyMedium)),
+          Flexible(
+            child: Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.right,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: valueColor ?? theme.colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
+}
+
+class _PrivacyCard extends StatelessWidget {
+  const _PrivacyCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return MRCard(
+      gradient: LinearGradient(
+        colors: [
+          theme.colorScheme.primaryContainer.withValues(alpha: .72),
+          theme.colorScheme.surfaceContainerLow,
+        ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.shield_rounded, color: AppColors.emerald),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Private by design',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Your wellness records are loaded only after sign-in and are tied to your secure MindRise account.',
+                  style: theme.textTheme.bodySmall,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+String _roleLabel(AppUserRole? role) {
+  return switch (role) {
+    AppUserRole.patient => 'Member',
+    AppUserRole.practitioner => 'Practitioner',
+    AppUserRole.admin => 'Administrator',
+    AppUserRole.unknown || null => 'Member',
+  };
+}
+
+String _formatMood(String? mood) {
+  if (mood == null || mood.trim().isEmpty) return '--';
+  return mood
+      .replaceAll('_', ' ')
+      .split(' ')
+      .where((part) => part.isNotEmpty)
+      .map((part) => '${part[0].toUpperCase()}${part.substring(1)}')
+      .join(' ');
 }

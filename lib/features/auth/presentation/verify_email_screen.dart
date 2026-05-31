@@ -97,7 +97,7 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
                   'Verify Email',
                   textAlign: TextAlign.center,
                   style: theme.textTheme.headlineLarge?.copyWith(
-                    fontWeight: FontWeight.w900,
+                    fontWeight: FontWeight.w700,
                     color: AppColors.emerald,
                   ),
                 ),

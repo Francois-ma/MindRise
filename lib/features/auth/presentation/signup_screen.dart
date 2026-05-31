@@ -72,7 +72,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 Text(
                   'Create Account',
                   style: theme.textTheme.headlineLarge?.copyWith(
-                    fontWeight: FontWeight.w900,
+                    fontWeight: FontWeight.w700,
                     color: AppColors.emerald,
                   ),
                 ),

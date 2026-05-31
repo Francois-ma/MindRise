@@ -2,15 +2,15 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, Building2, Mail, ShieldCheck } from 'lucide-react';
 import { PageHero, SectionIntro } from './Layout';
 import { ValueCard } from './Cards';
-import { SignupPanel } from './SignupPanel';
+import { LoginPanel, SignupPanel } from './SignupPanel';
 
 export function StartHero() {
   return (
     <PageHero
       compact
-      eyebrow="Get involved"
-      title="Join MindRise Wellness Initiative."
-      lead="Create an account for the MindRise experience or connect with us for school, community, media, and institutional partnerships."
+      eyebrow="Account access"
+      title="Open the MindRise digital experience."
+      lead="Create a verified account or sign in to use the MindRise dashboard on the web, with the same account ready for mobile access."
     />
   );
 }
@@ -20,11 +20,14 @@ export function StartAccountSection() {
     <>
       <section className="section account-section">
         <SectionIntro
-          eyebrow="Account access"
-          title="Create your MindRise account."
-          lead="Start with a verified email account so you can use MindRise digital features when they are available to you."
+          eyebrow="Web app access"
+          title="Create an account or sign in to continue."
+          lead="After email verification, MindRise opens a private dashboard with mood tracking, insights, reset tools, learning resources, support pathways, and profile access."
         />
-        <SignupPanel />
+        <div className="auth-access-grid">
+          <SignupPanel />
+          <LoginPanel />
+        </div>
       </section>
 
       <section className="section section--start-page">

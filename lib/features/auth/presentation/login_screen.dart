@@ -69,7 +69,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   'Welcome Back',
                   textAlign: TextAlign.center,
                   style: theme.textTheme.headlineLarge?.copyWith(
-                    fontWeight: FontWeight.w900,
+                    fontWeight: FontWeight.w700,
                     color: AppColors.emerald,
                   ),
                 ),
