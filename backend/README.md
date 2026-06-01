@@ -227,3 +227,19 @@ AI_INSIGHTS_INCLUDE_NOTES=false
 ```
 
 Keep `AI_INSIGHTS_INCLUDE_NOTES=false` unless you have explicit consent and a compliant data-processing agreement, because mood notes can contain sensitive health information.
+
+
+## Contact Form Email Delivery
+
+The website contact form posts to `/api/v1/contact/message/` and sends the message to `CONTACT_RECIPIENT_EMAIL` through Resend. A `503` response means Django reached Resend but email delivery failed or Resend is not configured.
+
+For production, verify `mindrisewellness.org` in Resend first, then set these Render environment variables:
+
+```env
+RESEND_API_KEY=your-resend-api-key
+RESEND_FROM_EMAIL="MindRise <no-reply@mindrisewellness.org>"
+RESEND_REPLY_TO_EMAIL=mindriserwanda@gmail.com
+CONTACT_RECIPIENT_EMAIL=mindriserwanda@gmail.com
+```
+
+Do not use `onboarding@resend.dev` for production contact messages unless the recipient is the same email address as the Resend account. Resend restricts that testing sender.

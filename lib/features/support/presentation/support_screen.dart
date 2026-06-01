@@ -39,12 +39,12 @@ class _SupportScreenState extends ConsumerState<SupportScreen> {
 
     setState(() => _isStartingChat = true);
     try {
-      await ref.read(supportRepositoryProvider).startAiThread(message);
+      final thread = await ref
+          .read(supportRepositoryProvider)
+          .startAiThread(message);
       _messageController.clear();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Support thread started.')),
-        );
+        context.push('/support/thread/${thread.id}', extra: thread);
       }
     } on Object catch (error) {
       if (mounted) {

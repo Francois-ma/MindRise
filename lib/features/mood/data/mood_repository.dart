@@ -72,6 +72,43 @@ class MoodRepository {
     );
     return MoodEntry.fromJson(response.data ?? const {});
   }
+
+  Future<void> createGratitudeEntry({
+    required List<String> items,
+    String note = '',
+  }) async {
+    await _dio.post<void>(
+      '/wellness/gratitude/',
+      data: {'items': items, 'note': note.trim()},
+    );
+  }
+
+  Future<void> createThoughtReframe({
+    required String negativeThought,
+    required String reframedThought,
+  }) async {
+    await _dio.post<void>(
+      '/wellness/reframes/',
+      data: {
+        'negative_thought': negativeThought.trim(),
+        'reframed_thought': reframedThought.trim(),
+      },
+    );
+  }
+
+  Future<void> completeMeditation({
+    required String title,
+    required int durationSeconds,
+  }) async {
+    await _dio.post<void>(
+      '/wellness/meditations/',
+      data: {
+        'title': title.trim(),
+        'duration_seconds': durationSeconds,
+        'completed': true,
+      },
+    );
+  }
 }
 
 class MoodAiInsights {

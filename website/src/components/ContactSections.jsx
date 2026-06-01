@@ -87,7 +87,10 @@ function ContactForm() {
       setForm(initialForm);
       setStatus({ type: 'success', message: 'Your message has been sent to MindRise.' });
     } catch (error) {
-      setStatus({ type: 'error', message: error.message });
+      const message = error.status === 503
+        ? 'MindRise email delivery is temporarily unavailable. Please email mindriserwanda@gmail.com directly while we restore the contact form.'
+        : error.message;
+      setStatus({ type: 'error', message });
     } finally {
       setLoading(false);
     }

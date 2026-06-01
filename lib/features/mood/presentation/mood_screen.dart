@@ -439,7 +439,7 @@ class _RecentMood extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        '${option.label} · ${entry.score}/10',
+                        '${option.label} - ${entry.score}/10',
                         style: const TextStyle(fontWeight: FontWeight.w700),
                       ),
                     ),

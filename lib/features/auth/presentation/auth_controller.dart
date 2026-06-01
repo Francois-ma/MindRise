@@ -177,6 +177,58 @@ class AuthController extends Notifier<AuthState> {
     }
   }
 
+  Future<bool> updateProfile({
+    required String firstName,
+    required String lastName,
+    required String phoneNumber,
+    required String timezone,
+  }) async {
+    final previous = state;
+    state = previous.copyWith(clearErrorMessage: true);
+    try {
+      final user = await _repository.updateProfile(
+        firstName: firstName,
+        lastName: lastName,
+        phoneNumber: phoneNumber,
+        timezone: timezone,
+      );
+      state = AuthState(status: AuthStatus.authenticated, user: user);
+      return true;
+    } on DioException catch (error) {
+      state = previous.copyWith(
+        errorMessage: error.error?.toString() ?? error.message,
+      );
+      return false;
+    } on Object catch (error) {
+      state = previous.copyWith(errorMessage: error.toString());
+      return false;
+    }
+  }
+
+  Future<bool> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final previous = state;
+    state = previous.copyWith(clearErrorMessage: true);
+    try {
+      await _repository.changePassword(
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+      );
+      state = previous.copyWith(clearErrorMessage: true);
+      return true;
+    } on DioException catch (error) {
+      state = previous.copyWith(
+        errorMessage: error.error?.toString() ?? error.message,
+      );
+      return false;
+    } on Object catch (error) {
+      state = previous.copyWith(errorMessage: error.toString());
+      return false;
+    }
+  }
+
   Future<void> logout() async {
     await _repository.logout();
     state = const AuthState(status: AuthStatus.unauthenticated);

@@ -79,8 +79,22 @@ class ProfileScreen extends ConsumerWidget {
                             ? AppColors.emerald
                             : theme.colorScheme.error,
                       ),
+                      _AccountRow(
+                        icon: Icons.phone_rounded,
+                        label: 'Phone',
+                        value: user?.phoneNumber.isNotEmpty == true
+                            ? user!.phoneNumber
+                            : 'Not added',
+                      ),
+                      _AccountRow(
+                        icon: Icons.public_rounded,
+                        label: 'Timezone',
+                        value: user?.timezone ?? 'UTC',
+                      ),
                     ],
                   ),
+                  const SizedBox(height: AppSpacing.md),
+                  _ProfileActions(user: user),
                   const SizedBox(height: AppSpacing.xl),
                   const _PrivacyCard(),
                   const SizedBox(height: AppSpacing.xl),
@@ -114,6 +128,290 @@ class ProfileScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+class _ProfileActions extends StatelessWidget {
+  const _ProfileActions({required this.user});
+
+  final AppUser? user;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: user == null
+                ? null
+                : () => _showEditProfileDialog(context, user!),
+            icon: const Icon(Icons.edit_rounded),
+            label: const Text('Edit Profile'),
+          ),
+        ),
+        const SizedBox(width: AppSpacing.md),
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: () => _showPasswordDialog(context),
+            icon: const Icon(Icons.lock_reset_rounded),
+            label: const Text('Password'),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+Future<void> _showEditProfileDialog(BuildContext context, AppUser user) async {
+  final firstNameController = TextEditingController(text: user.firstName);
+  final lastNameController = TextEditingController(text: user.lastName);
+  final phoneController = TextEditingController(text: user.phoneNumber);
+  final timezoneController = TextEditingController(text: user.timezone);
+  final formKey = GlobalKey<FormState>();
+
+  await showDialog<void>(
+    context: context,
+    builder: (dialogContext) {
+      var isSaving = false;
+      return Consumer(
+        builder: (context, ref, child) {
+          return StatefulBuilder(
+            builder: (context, setState) {
+              Future<void> save() async {
+                if (!formKey.currentState!.validate() || isSaving) return;
+                setState(() => isSaving = true);
+                final success = await ref
+                    .read(authControllerProvider.notifier)
+                    .updateProfile(
+                      firstName: firstNameController.text,
+                      lastName: lastNameController.text,
+                      phoneNumber: phoneController.text,
+                      timezone: timezoneController.text,
+                    );
+                if (!context.mounted) return;
+                setState(() => isSaving = false);
+                if (success) {
+                  Navigator.of(dialogContext).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Profile updated securely.')),
+                  );
+                } else {
+                  final message = ref.read(authControllerProvider).errorMessage;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(message ?? 'Profile update failed.'),
+                    ),
+                  );
+                }
+              }
+
+              return AlertDialog(
+                title: const Text('Edit profile'),
+                content: Form(
+                  key: formKey,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextFormField(
+                          controller: firstNameController,
+                          decoration: const InputDecoration(
+                            labelText: 'First name',
+                            prefixIcon: Icon(Icons.person_rounded),
+                          ),
+                          validator: (value) =>
+                              value == null || value.trim().isEmpty
+                              ? 'First name is required'
+                              : null,
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        TextFormField(
+                          controller: lastNameController,
+                          decoration: const InputDecoration(
+                            labelText: 'Last name',
+                            prefixIcon: Icon(Icons.badge_rounded),
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        TextFormField(
+                          controller: phoneController,
+                          keyboardType: TextInputType.phone,
+                          decoration: const InputDecoration(
+                            labelText: 'Phone number',
+                            prefixIcon: Icon(Icons.phone_rounded),
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        TextFormField(
+                          controller: timezoneController,
+                          decoration: const InputDecoration(
+                            labelText: 'Timezone',
+                            prefixIcon: Icon(Icons.public_rounded),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: isSaving
+                        ? null
+                        : () => Navigator.of(dialogContext).pop(),
+                    child: const Text('Cancel'),
+                  ),
+                  FilledButton.icon(
+                    onPressed: isSaving ? null : save,
+                    icon: isSaving
+                        ? const SizedBox.square(
+                            dimension: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.save_rounded),
+                    label: const Text('Save'),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      );
+    },
+  );
+
+  firstNameController.dispose();
+  lastNameController.dispose();
+  phoneController.dispose();
+  timezoneController.dispose();
+}
+
+Future<void> _showPasswordDialog(BuildContext context) async {
+  final currentController = TextEditingController();
+  final newController = TextEditingController();
+  final confirmController = TextEditingController();
+  final formKey = GlobalKey<FormState>();
+
+  await showDialog<void>(
+    context: context,
+    builder: (dialogContext) {
+      var isSaving = false;
+      var obscurePassword = true;
+      return Consumer(
+        builder: (context, ref, child) {
+          return StatefulBuilder(
+            builder: (context, setState) {
+              Future<void> save() async {
+                if (!formKey.currentState!.validate() || isSaving) return;
+                setState(() => isSaving = true);
+                final success = await ref
+                    .read(authControllerProvider.notifier)
+                    .changePassword(
+                      currentPassword: currentController.text,
+                      newPassword: newController.text,
+                    );
+                if (!context.mounted) return;
+                setState(() => isSaving = false);
+                if (success) {
+                  Navigator.of(dialogContext).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Password changed securely.')),
+                  );
+                } else {
+                  final message = ref.read(authControllerProvider).errorMessage;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(message ?? 'Password change failed.'),
+                    ),
+                  );
+                }
+              }
+
+              return AlertDialog(
+                title: const Text('Change password'),
+                content: Form(
+                  key: formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextFormField(
+                        controller: currentController,
+                        obscureText: obscurePassword,
+                        decoration: const InputDecoration(
+                          labelText: 'Current password',
+                          prefixIcon: Icon(Icons.lock_rounded),
+                        ),
+                        validator: (value) => value == null || value.isEmpty
+                            ? 'Enter your current password'
+                            : null,
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      TextFormField(
+                        controller: newController,
+                        obscureText: obscurePassword,
+                        decoration: const InputDecoration(
+                          labelText: 'New password',
+                          prefixIcon: Icon(Icons.lock_reset_rounded),
+                        ),
+                        validator: (value) => value == null || value.length < 10
+                            ? 'Use at least 10 characters'
+                            : null,
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      TextFormField(
+                        controller: confirmController,
+                        obscureText: obscurePassword,
+                        decoration: InputDecoration(
+                          labelText: 'Confirm new password',
+                          prefixIcon: const Icon(Icons.verified_user_rounded),
+                          suffixIcon: IconButton(
+                            tooltip: obscurePassword
+                                ? 'Show password'
+                                : 'Hide password',
+                            onPressed: () => setState(
+                              () => obscurePassword = !obscurePassword,
+                            ),
+                            icon: Icon(
+                              obscurePassword
+                                  ? Icons.visibility_rounded
+                                  : Icons.visibility_off_rounded,
+                            ),
+                          ),
+                        ),
+                        validator: (value) => value != newController.text
+                            ? 'Passwords do not match'
+                            : null,
+                      ),
+                    ],
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: isSaving
+                        ? null
+                        : () => Navigator.of(dialogContext).pop(),
+                    child: const Text('Cancel'),
+                  ),
+                  FilledButton.icon(
+                    onPressed: isSaving ? null : save,
+                    icon: isSaving
+                        ? const SizedBox.square(
+                            dimension: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.lock_reset_rounded),
+                    label: const Text('Update'),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      );
+    },
+  );
+
+  currentController.dispose();
+  newController.dispose();
+  confirmController.dispose();
 }
 
 class _AccountStatusCard extends StatelessWidget {

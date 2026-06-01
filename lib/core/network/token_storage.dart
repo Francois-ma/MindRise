@@ -9,7 +9,19 @@ class AuthTokens {
 }
 
 final tokenStorageProvider = Provider<TokenStorage>((ref) {
-  return const TokenStorage(FlutterSecureStorage());
+  return const TokenStorage(
+    FlutterSecureStorage(
+      aOptions: AndroidOptions(
+        resetOnError: true,
+        migrateOnAlgorithmChange: true,
+        storageNamespace: 'mindrise_auth',
+      ),
+      iOptions: IOSOptions(
+        accessibility: KeychainAccessibility.first_unlock_this_device,
+        synchronizable: false,
+      ),
+    ),
+  );
 });
 
 class TokenStorage {

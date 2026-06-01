@@ -298,10 +298,12 @@ class _LearningMaterialTile extends StatelessWidget {
   Future<void> _openMaterial(BuildContext context) async {
     if (!material.hasUrl) return;
     final uri = Uri.tryParse(material.url);
-    final canOpen =
-        uri != null && (uri.scheme == 'https' || uri.scheme == 'http');
+    final canOpen = uri != null && uri.scheme == 'https';
     if (!canOpen) {
-      await _copyLink(context, 'Material link copied.');
+      await _copyLink(
+        context,
+        'Only secure HTTPS material links can be opened. Link copied.',
+      );
       return;
     }
 

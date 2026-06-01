@@ -34,6 +34,10 @@ class AppUser {
     required this.email,
     required this.role,
     required this.isEmailVerified,
+    required this.firstName,
+    required this.lastName,
+    required this.phoneNumber,
+    required this.timezone,
   });
 
   final int id;
@@ -41,6 +45,10 @@ class AppUser {
   final String email;
   final AppUserRole role;
   final bool isEmailVerified;
+  final String firstName;
+  final String lastName;
+  final String phoneNumber;
+  final String timezone;
 
   factory AppUser.fromJson(Map<String, dynamic> json) {
     final firstName = json['first_name']?.toString().trim() ?? '';
@@ -62,6 +70,10 @@ class AppUser {
       email: email,
       role: AppUserRole.fromApi(json['role']),
       isEmailVerified: json['is_email_verified'] == true,
+      firstName: firstName,
+      lastName: lastName,
+      phoneNumber: json['phone_number']?.toString().trim() ?? '',
+      timezone: json['timezone']?.toString().trim() ?? 'UTC',
     );
   }
 }
@@ -109,7 +121,7 @@ class AuthRepository {
   }) async {
     final response = await _dio.post<Map<String, dynamic>>(
       '/auth/login/',
-      data: {'email': email, 'password': password},
+      data: {'email': email.trim().toLowerCase(), 'password': password},
     );
     return _persistAuthResponse(response.data);
   }
@@ -122,13 +134,16 @@ class AuthRepository {
     final response = await _dio.post<Map<String, dynamic>>(
       '/auth/register/',
       data: {
-        'name': name,
-        'email': email,
+        'name': name.trim(),
+        'email': email.trim().toLowerCase(),
         'password': password,
         'accepted_terms': true,
       },
     );
-    return RegistrationResult.fromJson(response.data, fallbackEmail: email);
+    return RegistrationResult.fromJson(
+      response.data,
+      fallbackEmail: email.trim().toLowerCase(),
+    );
   }
 
   Future<AppUser> verifyEmail({
@@ -137,13 +152,44 @@ class AuthRepository {
   }) async {
     final response = await _dio.post<Map<String, dynamic>>(
       '/auth/email/verify/',
-      data: {'email': email, 'code': code},
+      data: {'email': email.trim().toLowerCase(), 'code': code.trim()},
     );
     return _persistAuthResponse(response.data);
   }
 
   Future<void> resendVerificationCode({required String email}) async {
-    await _dio.post<void>('/auth/email/resend/', data: {'email': email});
+    await _dio.post<void>(
+      '/auth/email/resend/',
+      data: {'email': email.trim().toLowerCase()},
+    );
+  }
+
+  Future<AppUser> updateProfile({
+    required String firstName,
+    required String lastName,
+    required String phoneNumber,
+    required String timezone,
+  }) async {
+    final response = await _dio.patch<Map<String, dynamic>>(
+      '/auth/me/',
+      data: {
+        'first_name': firstName.trim(),
+        'last_name': lastName.trim(),
+        'phone_number': phoneNumber.trim(),
+        'timezone': timezone.trim().isEmpty ? 'UTC' : timezone.trim(),
+      },
+    );
+    return AppUser.fromJson(response.data ?? const {});
+  }
+
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    await _dio.post<void>(
+      '/auth/password/',
+      data: {'current_password': currentPassword, 'new_password': newPassword},
+    );
   }
 
   Future<void> logout() async {

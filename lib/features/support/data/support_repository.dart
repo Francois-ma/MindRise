@@ -52,18 +52,20 @@ class SupportRepository {
     ).map(CrisisResource.fromJson).toList(growable: false);
   }
 
-  Future<void> startAiThread(String message) async {
+  Future<SupportThread> startAiThread(String message) async {
     final thread = await _dio.post<Map<String, dynamic>>(
       '/support/threads/',
       data: {'thread_type': 'ai', 'subject': 'MindRise Support'},
     );
-    final threadId = thread.data?['id'];
-    if (threadId != null) {
-      await _dio.post<void>(
-        '/support/threads/$threadId/messages/',
-        data: {'body': message},
-      );
+    final supportThread = SupportThread.fromJson(thread.data ?? const {});
+    if (supportThread.id <= 0) {
+      throw const ApiException('Support thread could not be created.');
     }
+    await _dio.post<void>(
+      '/support/threads/${supportThread.id}/messages/',
+      data: {'body': message},
+    );
+    return supportThread;
   }
 
   Future<SupportThread> startPractitionerThread(
@@ -77,7 +79,11 @@ class SupportRepository {
         'subject': practitioner.displayName,
       },
     );
-    return SupportThread.fromJson(response.data ?? const {});
+    final supportThread = SupportThread.fromJson(response.data ?? const {});
+    if (supportThread.id <= 0) {
+      throw const ApiException('Support thread could not be created.');
+    }
+    return supportThread;
   }
 
   Future<List<SupportMessage>> fetchMessages(int threadId) async {

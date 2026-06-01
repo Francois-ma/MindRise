@@ -1,25 +1,28 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/utils/api_error.dart';
 import '../../../core/widgets/gradient_header.dart';
 import '../../../core/widgets/mr_button.dart';
 import '../../../core/widgets/mr_card.dart';
 import '../../../core/widgets/mr_text_field.dart';
 import '../../../core/widgets/profile_button.dart';
+import '../../mood/data/mood_repository.dart';
 
 enum ResetActivity { breathing, gratitude, reframing, meditation }
 
-class ResetScreen extends StatefulWidget {
+class ResetScreen extends ConsumerStatefulWidget {
   const ResetScreen({super.key});
 
   @override
-  State<ResetScreen> createState() => _ResetScreenState();
+  ConsumerState<ResetScreen> createState() => _ResetScreenState();
 }
 
-class _ResetScreenState extends State<ResetScreen>
+class _ResetScreenState extends ConsumerState<ResetScreen>
     with SingleTickerProviderStateMixin {
   final _gratitudeControllers = List.generate(
     3,
@@ -31,6 +34,7 @@ class _ResetScreenState extends State<ResetScreen>
   Timer? _timer;
   ResetActivity? _activity;
   int _remainingSeconds = 0;
+  bool _isSavingReset = false;
 
   @override
   void initState() {
@@ -68,6 +72,99 @@ class _ResetScreenState extends State<ResetScreen>
         setState(() => _remainingSeconds--);
       }
     });
+  }
+
+  Future<void> _saveGratitude() async {
+    final items = _gratitudeControllers
+        .map((controller) => controller.text.trim())
+        .where((item) => item.isNotEmpty)
+        .toList(growable: false);
+    if (items.isEmpty || _isSavingReset) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Add at least one gratitude item.')),
+      );
+      return;
+    }
+
+    setState(() => _isSavingReset = true);
+    try {
+      await ref.read(moodRepositoryProvider).createGratitudeEntry(items: items);
+      for (final controller in _gratitudeControllers) {
+        controller.clear();
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Gratitude saved securely.')),
+        );
+      }
+    } on Object catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(userMessageFromError(error))));
+      }
+    } finally {
+      if (mounted) setState(() => _isSavingReset = false);
+    }
+  }
+
+  Future<void> _saveReframe() async {
+    final negativeThought = _negativeThoughtController.text.trim();
+    final reframedThought = _reframedThoughtController.text.trim();
+    if (negativeThought.isEmpty || reframedThought.isEmpty || _isSavingReset) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Write both thoughts before saving.')),
+      );
+      return;
+    }
+
+    setState(() => _isSavingReset = true);
+    try {
+      await ref
+          .read(moodRepositoryProvider)
+          .createThoughtReframe(
+            negativeThought: negativeThought,
+            reframedThought: reframedThought,
+          );
+      _negativeThoughtController.clear();
+      _reframedThoughtController.clear();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Reframe saved securely.')),
+        );
+      }
+    } on Object catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(userMessageFromError(error))));
+      }
+    } finally {
+      if (mounted) setState(() => _isSavingReset = false);
+    }
+  }
+
+  Future<void> _completeMeditation(String title, int durationSeconds) async {
+    if (_isSavingReset) return;
+    setState(() => _isSavingReset = true);
+    try {
+      await ref
+          .read(moodRepositoryProvider)
+          .completeMeditation(title: title, durationSeconds: durationSeconds);
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('$title saved securely.')));
+      }
+    } on Object catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(userMessageFromError(error))));
+      }
+    } finally {
+      if (mounted) setState(() => _isSavingReset = false);
+    }
   }
 
   @override
@@ -297,13 +394,8 @@ class _ResetScreenState extends State<ResetScreen>
         MRButton(
           label: 'Save Gratitude',
           icon: Icons.save_rounded,
-          onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Gratitude saved for this session.'),
-              ),
-            );
-          },
+          isLoading: _isSavingReset,
+          onPressed: _saveGratitude,
         ),
       ],
     );
@@ -331,11 +423,8 @@ class _ResetScreenState extends State<ResetScreen>
         MRButton(
           label: 'Save Reframe',
           icon: Icons.check_rounded,
-          onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Reframe saved for this session.')),
-            );
-          },
+          isLoading: _isSavingReset,
+          onPressed: _saveReframe,
         ),
       ],
     );
@@ -343,23 +432,29 @@ class _ResetScreenState extends State<ResetScreen>
 
   Widget _meditationView() {
     return Column(
-      children: const [
+      children: [
         _MeditationTile(
           title: 'Body Scan',
           duration: '5 min',
           description: 'Release tension from head to toe',
+          isSaving: _isSavingReset,
+          onComplete: () => _completeMeditation('Body Scan', 300),
         ),
-        SizedBox(height: AppSpacing.md),
+        const SizedBox(height: AppSpacing.md),
         _MeditationTile(
           title: 'Loving Kindness',
           duration: '7 min',
           description: 'Cultivate compassion for yourself',
+          isSaving: _isSavingReset,
+          onComplete: () => _completeMeditation('Loving Kindness', 420),
         ),
-        SizedBox(height: AppSpacing.md),
+        const SizedBox(height: AppSpacing.md),
         _MeditationTile(
           title: 'Mindful Awareness',
           duration: '10 min',
           description: 'Be present in this moment',
+          isSaving: _isSavingReset,
+          onComplete: () => _completeMeditation('Mindful Awareness', 600),
         ),
       ],
     );
@@ -418,11 +513,15 @@ class _MeditationTile extends StatelessWidget {
     required this.title,
     required this.duration,
     required this.description,
+    required this.isSaving,
+    required this.onComplete,
   });
 
   final String title;
   final String duration;
   final String description;
+  final bool isSaving;
+  final VoidCallback onComplete;
 
   @override
   Widget build(BuildContext context) {
@@ -448,7 +547,16 @@ class _MeditationTile extends StatelessWidget {
               ],
             ),
           ),
-          Chip(label: Text(duration)),
+          TextButton.icon(
+            onPressed: isSaving ? null : onComplete,
+            icon: isSaving
+                ? const SizedBox.square(
+                    dimension: 14,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.check_circle_rounded),
+            label: Text(duration),
+          ),
         ],
       ),
     );
