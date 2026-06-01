@@ -58,6 +58,14 @@ services:
         value: "false"
       - key: DJANGO_CSRF_TRUSTED_ORIGINS
         value: "https://mindrise-api.onrender.com,https://mind-rise-coral.vercel.app,https://mindrisewellness.org,https://www.mindrisewellness.org"
+      - key: DJANGO_SUPERUSER_EMAIL
+        sync: false
+      - key: DJANGO_SUPERUSER_PASSWORD
+        sync: false
+      - key: DJANGO_SUPERUSER_FIRST_NAME
+        value: MindRise
+      - key: DJANGO_SUPERUSER_LAST_NAME
+        value: Admin
       - key: RESEND_API_URL
         value: https://api.resend.com
       - key: RESEND_API_KEY

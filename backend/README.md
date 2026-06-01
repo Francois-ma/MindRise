@@ -125,6 +125,19 @@ The free Render web service uses an ephemeral filesystem, so uploaded learning m
 - `GET/POST /api/v1/support/threads/`
 - `GET/POST /api/v1/support/threads/{id}/messages/`
 
+## Creating the First Admin on Render Free
+
+Render Free web services do not provide shell access, so the deployment runs a safe admin bootstrap command after migrations. It only creates or promotes an admin account when these environment variables are set on the `mindrise-api` service:
+
+```env
+DJANGO_SUPERUSER_EMAIL=your-admin-email@example.com
+DJANGO_SUPERUSER_PASSWORD=use-a-long-random-password
+DJANGO_SUPERUSER_FIRST_NAME=MindRise
+DJANGO_SUPERUSER_LAST_NAME=Admin
+```
+
+Deploy or redeploy the API after setting them, then log in at `/admin/`. After the admin account works, remove `DJANGO_SUPERUSER_PASSWORD` from Render and redeploy. To intentionally reset the password later, temporarily set `DJANGO_SUPERUSER_RESET_PASSWORD=true` with a new password and redeploy once.
+
 ## Adding Psychologists
 
 Admins can add psychologists in Django Admin:

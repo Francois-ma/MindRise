@@ -22,6 +22,15 @@ class UserAdmin(DjangoUserAdmin):
         ("Permissions", {"fields": ("is_active", "is_staff", "is_superuser", "groups", "user_permissions")}),
         ("Important dates", {"fields": ("last_login", "date_joined", "created_at", "updated_at")}),
     )
+    add_fieldsets = (
+        (
+            None,
+            {
+                "classes": ("wide",),
+                "fields": ("email", "first_name", "last_name", "password1", "password2", "role", "is_staff"),
+            },
+        ),
+    )
 
 
 @admin.register(EmailVerificationChallenge)
@@ -46,12 +55,3 @@ class EmailVerificationChallengeAdmin(admin.ModelAdmin):
 
     def has_change_permission(self, request, obj=None):
         return False
-    add_fieldsets = (
-        (
-            None,
-            {
-                "classes": ("wide",),
-                "fields": ("email", "first_name", "password1", "password2", "role"),
-            },
-        ),
-    )
