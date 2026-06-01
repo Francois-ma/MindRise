@@ -196,7 +196,6 @@ Configure these values in production:
 RESEND_API_URL=https://api.resend.com
 RESEND_API_KEY=re_...
 RESEND_FROM_EMAIL="MindRise <onboarding@your-verified-domain.com>"
-RESEND_REPLY_TO_EMAIL=support@your-verified-domain.com
 EMAIL_VERIFICATION_CODE_TTL_MINUTES=15
 EMAIL_VERIFICATION_RESEND_COOLDOWN_SECONDS=60
 ```
@@ -231,14 +230,13 @@ Keep `AI_INSIGHTS_INCLUDE_NOTES=false` unless you have explicit consent and a co
 
 ## Contact Form Email Delivery
 
-The website contact form posts to `/api/v1/contact/message/` and sends the message to `CONTACT_RECIPIENT_EMAIL` through Resend. A `503` response means Django reached Resend but email delivery failed or Resend is not configured.
+The website contact form posts to `/api/v1/contact/message/` and sends the message directly to `CONTACT_RECIPIENT_EMAIL` through Resend. The submitted email address is included inside the email body for manual replies; it is not used as a Resend `reply_to` header. A `503` response means Django reached Resend but email delivery failed or Resend is not configured.
 
 For production, verify `mindrisewellness.org` in Resend first, then set these Render environment variables:
 
 ```env
 RESEND_API_KEY=your-resend-api-key
 RESEND_FROM_EMAIL="MindRise <no-reply@mindrisewellness.org>"
-RESEND_REPLY_TO_EMAIL=mindriserwanda@gmail.com
 CONTACT_RECIPIENT_EMAIL=mindriserwanda@gmail.com
 ```
 

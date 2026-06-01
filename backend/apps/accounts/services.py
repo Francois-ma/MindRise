@@ -57,6 +57,7 @@ class ResendEmailClient:
         html: str,
         idempotency_key: str,
         reply_to_email: str | None = None,
+        use_default_reply_to: bool = False,
     ) -> str:
         if not self.is_configured:
             if settings.DEBUG:
@@ -75,7 +76,9 @@ class ResendEmailClient:
             "text": text,
             "html": html,
         }
-        reply_to = reply_to_email or settings.RESEND_REPLY_TO_EMAIL
+        reply_to = reply_to_email
+        if reply_to is None and use_default_reply_to:
+            reply_to = settings.RESEND_REPLY_TO_EMAIL
         if reply_to:
             payload["reply_to"] = reply_to
 

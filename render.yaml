@@ -72,8 +72,6 @@ services:
         sync: false
       - key: RESEND_FROM_EMAIL
         value: "MindRise <no-reply@mindrisewellness.org>"
-      - key: RESEND_REPLY_TO_EMAIL
-        value: mindriserwanda@gmail.com
       - key: RESEND_TIMEOUT_SECONDS
         value: 8
       - key: CONTACT_RECIPIENT_EMAIL
