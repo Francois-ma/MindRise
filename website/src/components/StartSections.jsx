@@ -8,6 +8,9 @@ export function StartHero() {
   return (
     <PageHero
       compact
+      image="/6.png"
+      imageAlt="MindRise digital account access visual"
+      focal="center"
       eyebrow="Account access"
       title="Open the MindRise digital experience."
       lead="Create a verified account or sign in to use the MindRise dashboard on the web, with the same account ready for mobile access."

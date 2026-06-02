@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { PageHero, SectionIntro } from './Layout';
 import { ProgramCard, Stat } from './Cards';
+import { ImageShowcase } from './ImageShowcase';
 import { logoFullUrl } from './siteConfig';
 
 const pathways = [
@@ -110,10 +111,34 @@ const healingSteps = [
   },
 ];
 
+const homeShowcaseItems = [
+  {
+    src: '/1.png',
+    alt: 'MindRise youth mental health awareness visual',
+    label: 'Awareness',
+    text: 'Youth-friendly visuals that introduce MindRise with clarity and warmth.',
+  },
+  {
+    src: '/2.png',
+    alt: 'MindRise community wellness visual',
+    label: 'Community',
+    text: 'A calmer view of the people and environments MindRise serves.',
+  },
+  {
+    src: '/7%20%281%29.png',
+    alt: 'MindRise outreach and contact visual',
+    label: 'Outreach',
+    text: 'A wide image moment for partnerships, contact, and public engagement.',
+  },
+];
+
 export function HomeHero({ health }) {
   return (
     <PageHero
       className="home-hero"
+      image="/1.png"
+      imageAlt="MindRise awareness and youth mental health visual"
+      focal="center"
       eyebrow="MindRise Wellness Initiative"
       title="Rise Above, Speak Out."
       lead="A youth-driven mental health organization promoting emotional well-being, psychological resilience, and mental health literacy among young people and underserved communities in Rwanda."
@@ -166,6 +191,18 @@ export function WhoWeAreSection() {
         <Stat value="Early" label="Prevention, literacy, and early intervention" />
       </div>
     </section>
+  );
+}
+
+export function HomeImageShowcase() {
+  return (
+    <ImageShowcase
+      className="image-showcase--home"
+      eyebrow="MindRise in view"
+      title="A clearer visual story for awareness, community, and outreach."
+      lead="Images are presented as focused moments, not busy backgrounds, so the website feels organized and easy to read."
+      items={homeShowcaseItems}
+    />
   );
 }
 

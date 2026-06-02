@@ -6,6 +6,7 @@ import '../../features/auth/presentation/auth_controller.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/signup_screen.dart';
 import '../../features/auth/presentation/verify_email_screen.dart';
+import '../../features/chatbot/presentation/chatbot_screen.dart';
 import '../../features/dashboard/presentation/dashboard_shell.dart';
 import '../../features/home/presentation/home_screen.dart';
 import '../../features/insights/presentation/insights_screen.dart';
@@ -131,6 +132,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             ],
           ),
         ],
+      ),
+      GoRoute(
+        path: '/chatbot',
+        builder: (context, state) {
+          final extra = state.extra;
+          final initialMessage = extra is String ? extra : '';
+          return ChatbotScreen(initialMessage: initialMessage);
+        },
       ),
       GoRoute(
         path: '/profile',

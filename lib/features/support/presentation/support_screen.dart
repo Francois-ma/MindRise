@@ -22,7 +22,6 @@ class SupportScreen extends ConsumerStatefulWidget {
 
 class _SupportScreenState extends ConsumerState<SupportScreen> {
   final _messageController = TextEditingController();
-  bool _isStartingChat = false;
   int? _startingPractitionerId;
 
   @override
@@ -31,30 +30,9 @@ class _SupportScreenState extends ConsumerState<SupportScreen> {
     super.dispose();
   }
 
-  Future<void> _startAiChat() async {
-    if (_isStartingChat) return;
-    final message = _messageController.text.trim().isEmpty
-        ? "Hello, I'd like support today."
-        : _messageController.text.trim();
-
-    setState(() => _isStartingChat = true);
-    try {
-      final thread = await ref
-          .read(supportRepositoryProvider)
-          .startAiThread(message);
-      _messageController.clear();
-      if (mounted) {
-        context.push('/support/thread/${thread.id}', extra: thread);
-      }
-    } on Object catch (error) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(userMessageFromError(error))));
-      }
-    } finally {
-      if (mounted) setState(() => _isStartingChat = false);
-    }
+  void _openAiAssistant() {
+    final message = _messageController.text.trim();
+    context.push('/chatbot', extra: message);
   }
 
   Future<void> _startPractitionerChat(Practitioner practitioner) async {
@@ -134,14 +112,14 @@ class _SupportScreenState extends ConsumerState<SupportScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Guided Support',
+                                  'MindRise Assistant',
                                   style: theme.textTheme.titleMedium?.copyWith(
                                     fontWeight: FontWeight.w700,
                                   ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  'Start a private support thread for grounding and next steps.',
+                                  'Ask for grounding ideas, mental health education, and next steps.',
                                   style: theme.textTheme.bodySmall,
                                 ),
                               ],
@@ -155,16 +133,15 @@ class _SupportScreenState extends ConsumerState<SupportScreen> {
                         minLines: 1,
                         maxLines: 3,
                         decoration: const InputDecoration(
-                          hintText: 'Share what kind of support you need...',
+                          hintText: 'Ask what you need support with...',
                           prefixIcon: Icon(Icons.edit_rounded),
                         ),
                       ),
                       const SizedBox(height: AppSpacing.md),
                       MRButton(
-                        label: 'Start Support Thread',
-                        icon: Icons.chat_rounded,
-                        isLoading: _isStartingChat,
-                        onPressed: _startAiChat,
+                        label: 'Ask MindRise Assistant',
+                        icon: Icons.smart_toy_rounded,
+                        onPressed: _openAiAssistant,
                       ),
                     ],
                   ),

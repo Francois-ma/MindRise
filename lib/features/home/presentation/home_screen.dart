@@ -178,6 +178,13 @@ class HomeScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: AppSpacing.md),
                 _WideAction(
+                  icon: Icons.smart_toy_rounded,
+                  label: 'Ask MindRise Assistant',
+                  color: AppColors.emerald,
+                  onTap: () => context.push('/chatbot'),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                _WideAction(
                   icon: Icons.chat_bubble_rounded,
                   label: 'Talk to Support',
                   color: AppColors.blue,

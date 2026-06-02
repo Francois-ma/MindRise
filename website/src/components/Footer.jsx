@@ -4,15 +4,12 @@ import {
   AlertCircle,
   ArrowRight,
   CheckCircle2,
-  Camera,
   Loader2,
   Mail,
   MapPin,
-  MessageCircle,
   Send,
   ShieldCheck,
   Smartphone,
-  X as XIcon,
 } from 'lucide-react';
 import { sendContactMessage } from '../api';
 import { logoFullUrl } from './siteConfig';
@@ -21,17 +18,20 @@ const socialLinks = [
   {
     label: 'Instagram',
     href: 'https://www.instagram.com/mindrise_rwanda',
-    icon: Camera,
+    icon: InstagramIcon,
+    accent: '#e4405f',
   },
   {
     label: 'X',
     href: 'https://x.com/MindRise_RW',
-    icon: XIcon,
+    icon: XSocialIcon,
+    accent: '#ffffff',
   },
   {
     label: 'WhatsApp Channel',
     href: 'https://whatsapp.com/channel/0029VbAwpnf7j6fxTq8D6t3r',
-    icon: MessageCircle,
+    icon: WhatsAppIcon,
+    accent: '#25d366',
   },
 ];
 
@@ -102,7 +102,15 @@ export function Footer() {
               {socialLinks.map((item) => {
                 const Icon = item.icon;
                 return (
-                  <a className="footer-social-chip" key={item.href} href={item.href} target="_blank" rel="noopener noreferrer" aria-label={`MindRise on ${item.label}`}>
+                  <a
+                    className="footer-social-chip"
+                    key={item.href}
+                    href={item.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ '--social-accent': item.accent }}
+                    aria-label={`MindRise on ${item.label}`}
+                  >
                     <Icon size={17} aria-hidden="true" />
                     <span>{item.label}</span>
                   </a>
@@ -121,6 +129,44 @@ export function Footer() {
         </div>
       </div>
     </footer>
+  );
+}
+
+function InstagramIcon({ size = 17, ...props }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" {...props}>
+      <rect x="3.4" y="3.4" width="17.2" height="17.2" rx="5.1" stroke="currentColor" strokeWidth="2" />
+      <circle cx="12" cy="12" r="4.1" stroke="currentColor" strokeWidth="2" />
+      <circle cx="17.3" cy="6.8" r="1.25" fill="currentColor" />
+    </svg>
+  );
+}
+
+function XSocialIcon({ size = 17, ...props }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" {...props}>
+      <path
+        d="M4 3.5h4.5l4.1 5.6 4.8-5.6h2.7l-6.4 7.5L21 20.5h-4.5l-4.8-6.4-5.5 6.4H3.1l7.4-8.7L4 3.5Zm2.9 2 10.6 14h1.2L8.1 5.5H6.9Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
+function WhatsAppIcon({ size = 17, ...props }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" {...props}>
+      <path
+        d="M12 3.4a8.5 8.5 0 0 0-7.2 13l-.9 3.5 3.6-.9A8.5 8.5 0 1 0 12 3.4Z"
+        stroke="currentColor"
+        strokeLinejoin="round"
+        strokeWidth="2"
+      />
+      <path
+        d="M9.2 7.9c-.2-.5-.4-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.3 0 1.4 1 2.7 1.1 2.9.1.2 2 3.2 4.9 4.3 2.4 1 2.9.8 3.4.8.5-.1 1.7-.7 1.9-1.4.2-.7.2-1.3.2-1.4-.1-.1-.3-.2-.6-.4l-1.8-.8c-.3-.1-.5-.2-.7.2-.2.3-.8 1-.9 1.1-.2.2-.3.2-.6.1-.3-.2-1.2-.5-2.3-1.4-.8-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6l.5-.6c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.6-.1-.2-.7-1.7-.9-2.3Z"
+        fill="currentColor"
+      />
+    </svg>
   );
 }
 

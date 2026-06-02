@@ -1,11 +1,15 @@
 import { Brain, Eye, HandHeart, Megaphone, Target } from 'lucide-react';
 import { PageHero, SectionIntro } from './Layout';
 import { ValueCard } from './Cards';
+import { ImageShowcase } from './ImageShowcase';
 
 export function AboutHero() {
   return (
     <PageHero
       compact
+      image="/2.png"
+      imageAlt="MindRise community wellness visual"
+      focal="center"
       eyebrow="About MindRise"
       title="A youth-driven mental health initiative rooted in Rwanda."
       lead="MindRise Wellness Initiative promotes emotional well-being, psychological resilience, and mental health literacy, especially among young people and underserved communities."
@@ -27,6 +31,39 @@ export function MissionSection() {
         <p>Our slogan is a call to move beyond silence and shame, speak honestly about mental health, and build communities where healing is possible.</p>
       </div>
     </section>
+  );
+}
+
+const aboutShowcaseItems = [
+  {
+    src: '/2.png',
+    alt: 'MindRise organization visual for community wellness',
+    label: 'Rooted work',
+    text: 'The initiative stays grounded in people, place, and practical mental health education.',
+  },
+  {
+    src: '/5.png',
+    alt: 'MindRise support and listening visual',
+    label: 'Listening',
+    text: 'Open conversations make support feel closer and less intimidating.',
+  },
+  {
+    src: '/8.png',
+    alt: 'MindRise digital dashboard visual',
+    label: 'Digital access',
+    text: 'A private web pathway supports learning, reflection, and continuity.',
+  },
+];
+
+export function AboutImageShowcase() {
+  return (
+    <ImageShowcase
+      className="image-showcase--about"
+      eyebrow="Visual identity"
+      title="MindRise should feel calm, credible, and human."
+      lead="The visuals now support the story instead of competing with the content."
+      items={aboutShowcaseItems}
+    />
   );
 }
 

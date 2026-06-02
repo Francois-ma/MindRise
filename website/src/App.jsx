@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { ChatbotWidget } from './components/ChatbotWidget';
 import { About } from './pages/About';
 import { AppDashboard } from './pages/AppDashboard';
 import { Contact } from './pages/Contact';
@@ -42,6 +43,7 @@ export default function App() {
         <Route path="/contact" element={<Contact />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      <ChatbotWidget />
     </>
   );
 }

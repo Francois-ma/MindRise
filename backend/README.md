@@ -7,6 +7,7 @@ Secure Django REST backend for the MindRise Flutter app.
 - Email-based custom user model
 - JWT login, email-verified registration, refresh, logout, and profile APIs
 - Resend-powered email verification codes during signup
+- OpenAI-backed MindRise chatbot API with rate limiting and safety guidance
 - Access/refresh token rotation and refresh token blacklist
 - Secure default settings for production: HTTPS redirect, HSTS, secure cookies, nosniff, deny framing
 - DRF throttling, pagination, filtering, and consistent error shape
@@ -110,6 +111,7 @@ The free Render web service uses an ephemeral filesystem, so uploaded learning m
 - `POST /api/v1/auth/login/`
 - `POST /api/v1/auth/token/refresh/`
 - `POST /api/v1/auth/logout/`
+- `POST /api/v1/chatbot/message/`
 - `GET/PATCH /api/v1/auth/me/`
 - `GET/POST /api/v1/wellness/moods/`
 - `GET /api/v1/wellness/moods/summary/`
@@ -202,6 +204,24 @@ EMAIL_VERIFICATION_RESEND_COOLDOWN_SECONDS=60
 
 Use a verified Resend domain for `RESEND_FROM_EMAIL`. The API key stays server-side in Django and is never exposed to Flutter. When `DJANGO_DEBUG=true` and Resend is not configured, the backend logs the verification code for local development only.
 
+
+## AI Chatbot
+
+The website chatbot posts to `/api/v1/chatbot/message/`. The browser never receives the OpenAI API key; React calls Django, and Django calls OpenAI through the Responses API.
+
+Set these values in Render on the `mindrise-api` service:
+
+```env
+OPENAI_API_URL=https://api.openai.com/v1
+OPENAI_API_KEY=your-openai-api-key
+OPENAI_CHATBOT_MODEL=gpt-5.5
+OPENAI_CHATBOT_TIMEOUT_SECONDS=20
+OPENAI_CHATBOT_MAX_OUTPUT_TOKENS=500
+OPENAI_CHATBOT_REASONING_EFFORT=low
+OPENAI_CHATBOT_VERBOSITY=low
+```
+
+The chatbot endpoint is public for website visitors and rate-limited with the `chatbot` throttle scope. It does not store chat messages in the database. The service includes a deterministic crisis-safety response for urgent self-harm or harm-to-others wording before making an OpenAI request.
 ## Checks
 
 ```bash

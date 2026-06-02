@@ -64,7 +64,7 @@ def test_contact_message_returns_503_when_resend_fails(monkeypatch, settings):
     )
 
     assert response.status_code == 503
-    assert response.data["detail"] == "We could not send your message right now. Please try again."
+    assert response.data["error"]["message"] == "We could not send your message right now. Please try again."
 
 
 @pytest.mark.django_db

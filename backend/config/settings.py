@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt.token_blacklist",
     "apps.accounts",
     "apps.contact",
+    "apps.chatbot",
     "apps.wellness",
     "apps.learning",
     "apps.support",
@@ -160,6 +161,7 @@ REST_FRAMEWORK = {
         "user": "120/minute",
         "auth": "8/minute",
         "contact": "5/minute",
+        "chatbot": "12/hour",
     },
     "EXCEPTION_HANDLER": "config.exceptions.api_exception_handler",
 }
@@ -231,3 +233,11 @@ AI_INSIGHTS_ENDPOINT = config("AI_INSIGHTS_ENDPOINT", default="")
 AI_INSIGHTS_API_KEY = config("AI_INSIGHTS_API_KEY", default="")
 AI_INSIGHTS_TIMEOUT_SECONDS = config("AI_INSIGHTS_TIMEOUT_SECONDS", default=8, cast=int)
 AI_INSIGHTS_INCLUDE_NOTES = config("AI_INSIGHTS_INCLUDE_NOTES", default=False, cast=bool)
+
+OPENAI_API_URL = config("OPENAI_API_URL", default="https://api.openai.com/v1")
+OPENAI_API_KEY = config("OPENAI_API_KEY", default="")
+OPENAI_CHATBOT_MODEL = config("OPENAI_CHATBOT_MODEL", default="gpt-5.5")
+OPENAI_CHATBOT_TIMEOUT_SECONDS = config("OPENAI_CHATBOT_TIMEOUT_SECONDS", default=20, cast=int)
+OPENAI_CHATBOT_MAX_OUTPUT_TOKENS = config("OPENAI_CHATBOT_MAX_OUTPUT_TOKENS", default=500, cast=int)
+OPENAI_CHATBOT_REASONING_EFFORT = config("OPENAI_CHATBOT_REASONING_EFFORT", default="low")
+OPENAI_CHATBOT_VERBOSITY = config("OPENAI_CHATBOT_VERBOSITY", default="low")

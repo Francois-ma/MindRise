@@ -50,6 +50,7 @@ class DashboardShell extends StatelessWidget {
 
         if (useRail) {
           return Scaffold(
+            floatingActionButton: const _AssistantFab(),
             body: AppBackground(
               child: Row(
                 children: [
@@ -90,6 +91,7 @@ class DashboardShell extends StatelessWidget {
         }
 
         return Scaffold(
+          floatingActionButton: const _AssistantFab(),
           body: AppBackground(child: navigationShell),
           bottomNavigationBar: SafeArea(
             top: false,
@@ -156,4 +158,18 @@ class _DashboardDestination {
   final IconData icon;
   final IconData selectedIcon;
   final String label;
+}
+
+class _AssistantFab extends StatelessWidget {
+  const _AssistantFab();
+
+  @override
+  Widget build(BuildContext context) {
+    return FloatingActionButton.extended(
+      heroTag: 'mindrise-ai-assistant',
+      onPressed: () => context.push('/chatbot'),
+      icon: const Icon(Icons.smart_toy_rounded),
+      label: const Text('AI'),
+    );
+  }
 }

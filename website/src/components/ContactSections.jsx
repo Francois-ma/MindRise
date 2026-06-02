@@ -26,6 +26,9 @@ export function ContactHero() {
   return (
     <PageHero
       compact
+      image="/7%20%281%29.png"
+      imageAlt="MindRise partnership and contact visual"
+      focal="center"
       eyebrow="Contact"
       title="Work with MindRise Wellness Initiative."
       lead="Connect with us for school outreach, awareness campaigns, community engagement, media conversations, partnerships, or youth mental health education in Rwanda."

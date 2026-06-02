@@ -88,6 +88,20 @@ services:
         value: local
       - key: AI_INSIGHTS_INCLUDE_NOTES
         value: false
+      - key: OPENAI_API_URL
+        value: https://api.openai.com/v1
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_CHATBOT_MODEL
+        value: gpt-5.5
+      - key: OPENAI_CHATBOT_TIMEOUT_SECONDS
+        value: 20
+      - key: OPENAI_CHATBOT_MAX_OUTPUT_TOKENS
+        value: 500
+      - key: OPENAI_CHATBOT_REASONING_EFFORT
+        value: low
+      - key: OPENAI_CHATBOT_VERBOSITY
+        value: low
 
 databases:
   - name: mindrise-postgres

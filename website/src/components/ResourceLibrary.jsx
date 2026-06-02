@@ -41,6 +41,9 @@ export function ResourcesHero() {
   return (
     <PageHero
       compact
+      image="/4.png"
+      imageAlt="MindRise learning resources visual"
+      focal="center"
       eyebrow="Resources"
       title="Mental health literacy that young people can actually use."
       lead="MindRise provides evidence-informed, culturally sensitive resources on emotional well-being, resilience, confidence, communication, and life transitions."

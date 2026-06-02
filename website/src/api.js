@@ -34,6 +34,16 @@ export async function sendContactMessage(payload) {
     body: JSON.stringify(payload),
   });
 }
+
+export async function sendChatbotMessage(payload) {
+  return request('/chatbot/message/', {
+    method: 'POST',
+    body: JSON.stringify({
+      message: payload.message,
+      history: payload.history || [],
+    }),
+  });
+}
 export async function fetchHealth() {
   return request('/health/');
 }

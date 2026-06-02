@@ -6,6 +6,7 @@ import {
   CommitmentStrip,
   HealingPathSection,
   HomeHero,
+  HomeImageShowcase,
   ImpactReadinessSection,
   MobileContinuationSection,
   PathwaysSection,
@@ -29,6 +30,7 @@ export function Home() {
       <HomeHero health={health} />
       <CommitmentStrip />
       <WhoWeAreSection />
+      <HomeImageShowcase />
       <TrustCredibilitySection />
       <MobileContinuationSection />
       <PathwaysSection />

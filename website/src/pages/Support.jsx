@@ -1,6 +1,6 @@
-﻿
+
 import { Layout } from '../components/Layout';
-import { CommunityCareCallout, SupportHero, SupportPathways, UrgentSupportSection } from '../components/SupportSections';
+import { CommunityCareCallout, SupportHero, SupportImageShowcase, SupportPathways, UrgentSupportSection } from '../components/SupportSections';
 import '../styles.css';
 
 export function Support() {
@@ -8,6 +8,7 @@ export function Support() {
     <Layout active="support">
       <SupportHero />
       <SupportPathways />
+      <SupportImageShowcase />
       <UrgentSupportSection />
       <CommunityCareCallout />
     </Layout>

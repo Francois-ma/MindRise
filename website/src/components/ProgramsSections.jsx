@@ -1,6 +1,7 @@
 import { BookOpen, Building2, HeartPulse, Megaphone, MessageCircle, Radio, School } from 'lucide-react';
 import { PageHero, SectionIntro } from './Layout';
 import { ProgramCard } from './Cards';
+import { ImageShowcase } from './ImageShowcase';
 
 const programs = [
   {
@@ -45,6 +46,9 @@ export function ProgramsHero() {
   return (
     <PageHero
       compact
+      image="/3.png"
+      imageAlt="MindRise outreach and program visual"
+      focal="center"
       eyebrow="Programs"
       title="Community programs for mental health literacy and resilience."
       lead="MindRise works through community programs, school outreach, educational resources, and media engagement to make mental health support practical and accessible."
@@ -62,6 +66,39 @@ export function ProgramGrid() {
         ))}
       </div>
     </section>
+  );
+}
+
+const programShowcaseItems = [
+  {
+    src: '/3.png',
+    alt: 'MindRise program and school outreach visual',
+    label: 'Programs',
+    text: 'Program visuals are grouped around outreach, education, and community readiness.',
+  },
+  {
+    src: '/4.png',
+    alt: 'MindRise learning resources visual',
+    label: 'Resources',
+    text: 'Learning materials are treated as practical tools for young people and schools.',
+  },
+  {
+    src: '/7%20%282%29.png',
+    alt: 'MindRise community engagement visual',
+    label: 'Engagement',
+    text: 'Community moments are shown with restraint so the message remains clear.',
+  },
+];
+
+export function ProgramsImageShowcase() {
+  return (
+    <ImageShowcase
+      className="image-showcase--programs"
+      eyebrow="Program moments"
+      title="Images grouped around outreach, learning, and engagement."
+      lead="A focused image show gives the Programs page visual depth without making the layout feel crowded."
+      items={programShowcaseItems}
+    />
   );
 }
 
