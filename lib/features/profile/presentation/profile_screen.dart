@@ -19,6 +19,7 @@ class ProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final auth = ref.watch(authControllerProvider);
     final user = auth.user;
+    final isPractitioner = user?.role == AppUserRole.practitioner;
     final summary = ref.watch(moodSummaryProvider);
     final theme = Theme.of(context);
 
@@ -44,17 +45,20 @@ class ProfileScreen extends ConsumerWidget {
                   const SizedBox(height: AppSpacing.xl),
                   _AccountStatusCard(user: user),
                   const SizedBox(height: AppSpacing.xl),
-                  summary.when(
-                    data: (data) => _WellnessStats(summary: data),
-                    loading: () => const InlineLoadingCard(
-                      message: 'Loading your wellness record...',
+                  if (isPractitioner)
+                    _PractitionerAccessCard(user: user)
+                  else
+                    summary.when(
+                      data: (data) => _WellnessStats(summary: data),
+                      loading: () => const InlineLoadingCard(
+                        message: 'Loading your wellness record...',
+                      ),
+                      error: (error, stackTrace) => InlineErrorCard(
+                        title: 'Wellness record unavailable',
+                        error: error,
+                        onRetry: () => ref.invalidate(moodSummaryProvider),
+                      ),
                     ),
-                    error: (error, stackTrace) => InlineErrorCard(
-                      title: 'Wellness record unavailable',
-                      error: error,
-                      onRetry: () => ref.invalidate(moodSummaryProvider),
-                    ),
-                  ),
                   const SizedBox(height: AppSpacing.xl),
                   _AccountSection(
                     title: 'Account Access',
@@ -517,6 +521,43 @@ class _StatusChip extends StatelessWidget {
               color: color,
               fontWeight: FontWeight.w700,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PractitionerAccessCard extends StatelessWidget {
+  const _PractitionerAccessCard({required this.user});
+
+  final AppUser? user;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return MRCard(
+      gradient: const LinearGradient(
+        colors: [Color(0xFFE8FFF5), Color(0xFFE8F9FF)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.verified_user_rounded, color: AppColors.teal),
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            'Practitioner access',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            user?.isApproved == true
+                ? 'Your practitioner account is approved. Use the practitioner workspace to manage availability and patient conversations.'
+                : 'Your practitioner account is waiting for approval.',
           ),
         ],
       ),

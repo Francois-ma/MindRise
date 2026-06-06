@@ -155,7 +155,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               : null;
           return SupportChatScreen(
             threadId: threadId,
-            title: thread?.displayName ?? 'Psychologist',
+            title: thread?.displayName ?? 'Practitioner',
           );
         },
       ),

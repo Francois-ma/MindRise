@@ -8,7 +8,9 @@ import '../../../core/widgets/gradient_header.dart';
 import '../../../core/widgets/mr_card.dart';
 import '../../../core/widgets/profile_button.dart';
 import '../../../core/widgets/screen_state.dart';
+import '../../auth/data/auth_repository.dart';
 import '../../auth/presentation/auth_controller.dart';
+import 'practitioner_home_screen.dart';
 import '../../mood/data/mood_repository.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -18,6 +20,9 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final user = ref.watch(authControllerProvider).user;
+    if (user?.role == AppUserRole.practitioner) {
+      return const PractitionerHomeScreen();
+    }
     final summary = ref.watch(moodSummaryProvider);
 
     return RefreshIndicator(

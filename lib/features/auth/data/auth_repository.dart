@@ -34,6 +34,7 @@ class AppUser {
     required this.email,
     required this.role,
     required this.isEmailVerified,
+    required this.isApproved,
     required this.firstName,
     required this.lastName,
     required this.phoneNumber,
@@ -45,6 +46,7 @@ class AppUser {
   final String email;
   final AppUserRole role;
   final bool isEmailVerified;
+  final bool isApproved;
   final String firstName;
   final String lastName;
   final String phoneNumber;
@@ -70,6 +72,7 @@ class AppUser {
       email: email,
       role: AppUserRole.fromApi(json['role']),
       isEmailVerified: json['is_email_verified'] == true,
+      isApproved: json['is_approved'] != false,
       firstName: firstName,
       lastName: lastName,
       phoneNumber: json['phone_number']?.toString().trim() ?? '',

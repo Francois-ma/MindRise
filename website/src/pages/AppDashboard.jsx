@@ -48,17 +48,25 @@ const baseTabs = [
   { key: 'profile', label: 'Profile', icon: UserRound },
 ];
 
+const practitionerTabs = [
+  { key: 'practitioner-home', label: 'Workspace', icon: Home },
+  { key: 'practitioner-inbox', label: 'Patients', icon: MessageCircle },
+  { key: 'learn', label: 'Resources', icon: BookOpen },
+  { key: 'profile', label: 'Profile', icon: UserRound },
+];
+
 const moodOptions = ['happy', 'calm', 'neutral', 'sad', 'stressed', 'angry', 'energetic'];
 
 export function AppDashboard() {
   const auth = useAuth();
-  const [activeTab, setActiveTab] = useState('home');
+  const isPractitioner = auth.user?.role === 'practitioner';
+  const [activeTab, setActiveTab] = useState(() => (isPractitioner ? 'practitioner-home' : 'home'));
   const [dashboard, setDashboard] = useState({ loading: true, error: '', data: null });
   const isAdminUser = Boolean(auth.user?.is_staff || auth.user?.is_superuser || auth.user?.role === 'admin');
-  const visibleTabs = useMemo(
-    () => (isAdminUser ? [...baseTabs, { key: 'admin-practitioners', label: 'Approvals', icon: UserCheck }] : baseTabs),
-    [isAdminUser],
-  );
+  const visibleTabs = useMemo(() => {
+    if (isPractitioner) return practitionerTabs;
+    return isAdminUser ? [...baseTabs, { key: 'admin-practitioners', label: 'Approvals', icon: UserCheck }] : baseTabs;
+  }, [isAdminUser, isPractitioner]);
 
   const loadDashboard = useMemo(
     () => async () => {
@@ -98,10 +106,18 @@ export function AppDashboard() {
   }, [loadDashboard]);
 
   useEffect(() => {
+    if (isPractitioner && !practitionerTabs.some((tab) => tab.key === activeTab)) {
+      setActiveTab('practitioner-home');
+      return;
+    }
+    if (!isPractitioner && activeTab.startsWith('practitioner-')) {
+      setActiveTab('home');
+      return;
+    }
     if (!isAdminUser && activeTab === 'admin-practitioners') {
       setActiveTab('home');
     }
-  }, [activeTab, isAdminUser]);
+  }, [activeTab, isAdminUser, isPractitioner]);
 
   if (auth.loading) {
     return <AppLoadingScreen />;
@@ -118,9 +134,9 @@ export function AppDashboard() {
       <section className="web-app-shell">
         <div className="web-app-topbar">
           <div>
-            <p className="eyebrow">MindRise web app</p>
-            <h1>Welcome back, {firstName(auth.user?.name)}</h1>
-            <p>Use the same private MindRise experience across web and mobile.</p>
+            <p className="eyebrow">{isPractitioner ? 'Practitioner workspace' : 'MindRise web app'}</p>
+            <h1>{isPractitioner ? `Ready to support, ${firstName(auth.user?.name)}?` : `Welcome back, ${firstName(auth.user?.name)}`}</h1>
+            <p>{isPractitioner ? 'Manage your availability and respond to patient conversations.' : 'Use the same private MindRise experience across web and mobile.'}</p>
           </div>
           <div className="web-app-topbar__actions">
             <button className="button button--secondary" type="button" onClick={loadDashboard} disabled={dashboard.loading}>
@@ -171,6 +187,8 @@ export function AppDashboard() {
 }
 
 function ActivePanel({ tab, user, token, data, setTab, onRefresh, isAdminUser }) {
+  if (tab === 'practitioner-home') return <PractitionerWorkspacePanel token={token} user={user} practitioners={data.practitioners} setTab={setTab} />;
+  if (tab === 'practitioner-inbox') return <PractitionerInboxPanel token={token} user={user} />;
   if (tab === 'admin-practitioners') return isAdminUser ? <PendingPractitionersPanel token={token} /> : <HomePanel user={user} data={data} setTab={setTab} />;
   if (tab === 'mood') return <MoodPanel token={token} entries={data.entries} onRefresh={onRefresh} />;
   if (tab === 'insights') return <InsightsPanel summary={data.summary} insights={data.insights} />;
@@ -181,6 +199,57 @@ function ActivePanel({ tab, user, token, data, setTab, onRefresh, isAdminUser })
   return <HomePanel user={user} data={data} setTab={setTab} />;
 }
 
+function PractitionerWorkspacePanel({ token, user, practitioners, setTab }) {
+  const loadedProfile = practitioners.find((person) => person.is_my_profile) || null;
+  const [ownProfile, setOwnProfile] = useState(loadedProfile);
+
+  useEffect(() => {
+    setOwnProfile(loadedProfile);
+  }, [loadedProfile]);
+
+  const isOnline = Boolean(ownProfile?.is_available);
+
+  return (
+    <div className="web-app-stack practitioner-workspace">
+      <PanelHeading eyebrow="Practitioner workspace" title={`Good to see you, ${firstName(user?.name)}.`} text="Set your live status, review your support responsibilities, and respond to patients from one focused workspace." />
+      <section className="practitioner-workspace__status">
+        <div className="practitioner-workspace__identity">
+          <span className={isOnline ? 'practitioner-status-dot is-online' : 'practitioner-status-dot'} aria-hidden="true" />
+          <div>
+            <p className="eyebrow">Live status</p>
+            <h3>{isOnline ? 'Available for patient support' : 'Currently offline'}</h3>
+            <p>{ownProfile?.specialization || 'Complete your practitioner profile to help patients understand your area of care.'}</p>
+          </div>
+        </div>
+        <PractitionerAvailabilityControl token={token} initialProfile={ownProfile} onUpdated={setOwnProfile} />
+      </section>
+      <div className="practitioner-workspace__actions">
+        <button type="button" onClick={() => setTab('practitioner-inbox')}>
+          <MessageCircle size={20} aria-hidden="true" />
+          <span><strong>Patient conversations</strong><small>Read and answer private support messages.</small></span>
+        </button>
+        <button type="button" onClick={() => setTab('learn')}>
+          <BookOpen size={20} aria-hidden="true" />
+          <span><strong>Care resources</strong><small>Open education and guidance materials.</small></span>
+        </button>
+        <button type="button" onClick={() => setTab('profile')}>
+          <UserRound size={20} aria-hidden="true" />
+          <span><strong>Professional profile</strong><small>Review your account and approval status.</small></span>
+        </button>
+      </div>
+      <SupportConversationInbox token={token} role="practitioner" userId={user?.id} />
+    </div>
+  );
+}
+
+function PractitionerInboxPanel({ token, user }) {
+  return (
+    <div className="web-app-stack practitioner-workspace">
+      <PanelHeading eyebrow="Patients" title="Private patient conversations." text="Review active support requests and respond from your practitioner account." />
+      <SupportConversationInbox token={token} role="practitioner" userId={user?.id} />
+    </div>
+  );
+}
 function HomePanel({ user, data, setTab }) {
   return (
     <div className="web-app-stack">
@@ -495,9 +564,10 @@ function PendingPractitionersPanel({ token }) {
 }
 
 function ProfilePanel({ user, summary }) {
+  const isPractitioner = user?.role === 'practitioner';
   return (
     <div className="web-app-stack">
-      <PanelHeading eyebrow="Profile" title="Your MindRise account." text="This account opens private wellness features on web and can be used for the mobile app too." />
+      <PanelHeading eyebrow="Profile" title={isPractitioner ? 'Your practitioner account.' : 'Your MindRise account.'} text={isPractitioner ? 'Review your professional access and verified MindRise account status.' : 'This account opens private wellness features on web and can be used for the mobile app too.'} />
       <div className="web-profile-grid">
         <div className="web-app-card">
           <h3>Account</h3>
@@ -506,13 +576,21 @@ function ProfilePanel({ user, summary }) {
             <div><dt>Email</dt><dd>{user?.email}</dd></div>
             <div><dt>Role</dt><dd>{formatRole(user?.role)}</dd></div>
             <div><dt>Status</dt><dd>{user?.is_email_verified ? 'Verified' : 'Verification required'}</dd></div>
-            <div><dt>Approval</dt><dd>{user?.role === 'practitioner' ? (user?.is_approved ? 'Approved' : 'Pending') : 'Not required'}</dd></div>
+            <div><dt>Approval</dt><dd>{isPractitioner ? (user?.is_approved ? 'Approved' : 'Pending') : 'Not required'}</dd></div>
           </dl>
         </div>
-        <div className="web-app-card">
-          <h3>Wellness record</h3>
-          <MetricGrid summary={summary} compact />
-        </div>
+        {isPractitioner ? (
+          <div className="web-app-card practitioner-profile-guidance">
+            <ShieldCheck size={24} aria-hidden="true" />
+            <h3>Professional access</h3>
+            <p>Your practitioner workspace is reserved for approved accounts. Keep patient conversations private and mark yourself online only while ready to respond.</p>
+          </div>
+        ) : (
+          <div className="web-app-card">
+            <h3>Wellness record</h3>
+            <MetricGrid summary={summary} compact />
+          </div>
+        )}
       </div>
     </div>
   );

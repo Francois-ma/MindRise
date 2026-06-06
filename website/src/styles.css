@@ -6255,3 +6255,118 @@ textarea:focus-visible {
     max-width: 92%;
   }
 }
+/* Dedicated practitioner workspace */
+.practitioner-workspace__status {
+  display: grid;
+  grid-template-columns: minmax(240px, 0.72fr) minmax(0, 1.35fr);
+  gap: 18px;
+  align-items: stretch;
+}
+
+.practitioner-workspace__identity {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 22px;
+  border: 1px solid rgba(15, 23, 42, 0.09);
+  border-radius: 8px;
+  color: #334155;
+  background: linear-gradient(145deg, #ffffff, #f0fdfa);
+  box-shadow: 0 22px 65px rgba(15, 23, 42, 0.07);
+}
+
+.practitioner-workspace__identity h3,
+.practitioner-workspace__identity p {
+  margin: 0;
+}
+
+.practitioner-workspace__identity h3 {
+  color: #0f172a;
+  font-size: clamp(1.08rem, 1vw + 0.86rem, 1.34rem);
+  line-height: 1.25;
+  letter-spacing: 0;
+}
+
+.practitioner-workspace__identity p:not(.eyebrow) {
+  margin-top: 8px;
+  line-height: 1.65;
+}
+
+.practitioner-workspace__actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.practitioner-workspace__actions button {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-height: 112px;
+  padding: 18px;
+  border: 1px solid rgba(15, 23, 42, 0.09);
+  border-radius: 8px;
+  color: #0f766e;
+  background: #ffffff;
+  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.06);
+  text-align: left;
+  cursor: pointer;
+}
+
+.practitioner-workspace__actions button:hover,
+.practitioner-workspace__actions button:focus-visible {
+  border-color: rgba(15, 118, 110, 0.35);
+  background: #f0fdfa;
+  transform: translateY(-2px);
+}
+
+.practitioner-workspace__actions span {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.practitioner-workspace__actions strong {
+  color: #0f172a;
+}
+
+.practitioner-workspace__actions small {
+  color: #64748b;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 900px) {
+  .practitioner-workspace__status,
+  .practitioner-workspace__actions {
+    grid-template-columns: 1fr;
+  }
+
+  .practitioner-workspace__actions button {
+    min-height: 88px;
+  }
+}
+.practitioner-profile-guidance {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  color: #475569;
+  background: linear-gradient(145deg, #ffffff, #f0fdfa);
+}
+
+.practitioner-profile-guidance > svg {
+  color: #0f766e;
+}
+
+.practitioner-profile-guidance h3,
+.practitioner-profile-guidance p {
+  margin: 0;
+}
+
+.practitioner-profile-guidance h3 {
+  color: #0f172a;
+}
+
+.practitioner-profile-guidance p {
+  line-height: 1.7;
+}

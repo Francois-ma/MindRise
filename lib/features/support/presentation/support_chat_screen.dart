@@ -47,6 +47,7 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
           .sendMessage(threadId: widget.threadId, body: body);
       _messageController.clear();
       ref.invalidate(supportMessagesProvider(widget.threadId));
+      ref.invalidate(supportThreadsProvider);
     } on Object catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(
@@ -160,14 +161,17 @@ class _ChatHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                title.isEmpty ? 'Psychologist' : title,
+                title.isEmpty ? 'Practitioner' : title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              Text('Private consultation', style: theme.textTheme.bodySmall),
+              Text(
+                'Private practitioner conversation',
+                style: theme.textTheme.bodySmall,
+              ),
             ],
           ),
         ),
@@ -267,7 +271,7 @@ class _Composer extends StatelessWidget {
                 maxLines: 4,
                 textInputAction: TextInputAction.newline,
                 decoration: const InputDecoration(
-                  hintText: 'Message psychologist...',
+                  hintText: 'Message practitioner...',
                   prefixIcon: Icon(Icons.lock_rounded),
                 ),
               ),
