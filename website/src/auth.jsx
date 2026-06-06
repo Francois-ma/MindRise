@@ -6,6 +6,7 @@ import {
   logoutAccount,
   readStoredAuth,
   saveStoredAuth,
+  subscribeToAuthSession,
 } from './api';
 
 const AuthContext = createContext(null);
@@ -31,6 +32,11 @@ export function AuthProvider({ children }) {
     setUser(nextSession.user);
     return nextSession.user;
   }, []);
+
+  useEffect(() => subscribeToAuthSession((nextSession) => {
+    setSession(nextSession);
+    setUser(nextSession?.user || null);
+  }), []);
 
   const logout = useCallback(async () => {
     const stored = readStoredAuth();

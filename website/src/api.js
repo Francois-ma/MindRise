@@ -6,6 +6,7 @@ export const API_BASE_URL = configuredApiBaseUrl
 
 const serviceUnavailableHint = 'MindRise updates are temporarily unavailable. Please try again later.';
 const authStorageKey = 'mindrise.web.auth';
+const authSessionListeners = new Set();
 let refreshPromise = null;
 
 export function readStoredAuth() {
@@ -21,11 +22,31 @@ export function readStoredAuth() {
 export function saveStoredAuth(session) {
   if (typeof window === 'undefined') return;
   window.localStorage.setItem(authStorageKey, JSON.stringify(session));
+  notifyAuthSessionListeners(session);
 }
 
 export function clearStoredAuth() {
   if (typeof window === 'undefined') return;
   window.localStorage.removeItem(authStorageKey);
+  notifyAuthSessionListeners(null);
+}
+
+export function subscribeToAuthSession(listener) {
+  authSessionListeners.add(listener);
+
+  function syncAcrossTabs(event) {
+    if (event.key === authStorageKey) listener(readStoredAuth());
+  }
+
+  if (typeof window !== 'undefined') window.addEventListener('storage', syncAcrossTabs);
+  return () => {
+    authSessionListeners.delete(listener);
+    if (typeof window !== 'undefined') window.removeEventListener('storage', syncAcrossTabs);
+  };
+}
+
+function notifyAuthSessionListeners(session) {
+  authSessionListeners.forEach((listener) => listener(session));
 }
 
 export async function sendContactMessage(payload) {
@@ -240,15 +261,28 @@ async function request(path, options = {}) {
   const { token, headers, skipAuthRefresh = false, ...fetchOptions } = options;
   const shouldAuthorize = Boolean(token);
   const stored = shouldAuthorize ? readStoredAuth() : null;
-  const authToken = shouldAuthorize ? stored?.access || token : '';
+  let authToken = shouldAuthorize ? stored?.access || token : '';
 
   try {
+    if (shouldAuthorize && !skipAuthRefresh && isJwtExpiring(authToken)) {
+      const refreshed = await refreshStoredSession();
+      if (!refreshed?.access) {
+        throw new Error('Your MindRise session expired. Sign in again to continue.');
+      }
+      authToken = refreshed.access;
+    }
+
     let response = await sendRequest(path, fetchOptions, headers, authToken);
 
     if (response.status === 401 && shouldAuthorize && !skipAuthRefresh) {
       const refreshed = await refreshStoredSession();
-      if (refreshed?.access) {
-        response = await sendRequest(path, fetchOptions, headers, refreshed.access);
+      if (!refreshed?.access) {
+        throw new Error('Your MindRise session expired. Sign in again to continue.');
+      }
+      response = await sendRequest(path, fetchOptions, headers, refreshed.access);
+      if (response.status === 401) {
+        clearStoredAuth();
+        throw new Error('Your MindRise session expired. Sign in again to continue.');
       }
     }
 
@@ -258,6 +292,21 @@ async function request(path, options = {}) {
       throw new Error(serviceUnavailableHint);
     }
     throw error;
+  }
+}
+
+function isJwtExpiring(token, thresholdSeconds = 30) {
+  if (!token) return true;
+
+  try {
+    const payloadSegment = token.split('.')[1];
+    if (!payloadSegment) return true;
+    const normalized = payloadSegment.replaceAll('-', '+').replaceAll('_', '/');
+    const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=');
+    const payload = JSON.parse(window.atob(padded));
+    return !payload.exp || payload.exp <= Math.floor(Date.now() / 1000) + thresholdSeconds;
+  } catch {
+    return true;
   }
 }
 
@@ -282,7 +331,10 @@ async function refreshStoredSession() {
 
   refreshPromise = (async () => {
     const stored = readStoredAuth();
-    if (!stored?.refresh) return null;
+    if (!stored?.refresh) {
+      clearStoredAuth();
+      return null;
+    }
 
     try {
       const response = await sendRequest(
