@@ -179,6 +179,7 @@ def verify_email_code(*, email: str, code: str) -> User:
     except User.DoesNotExist as exc:
         raise ValidationError("Invalid or expired verification code.") from exc
 
+    invalid_code = False
     with transaction.atomic():
         challenge = user.email_verification_challenges.select_for_update().filter(
             used_at__isnull=True,
@@ -189,20 +190,22 @@ def verify_email_code(*, email: str, code: str) -> User:
 
         if challenge.failed_attempts >= settings.EMAIL_VERIFICATION_MAX_ATTEMPTS:
             challenge.mark_used()
-            raise ValidationError("Invalid or expired verification code.")
-
-        if not challenge.matches_code(code):
+            invalid_code = True
+        elif not challenge.matches_code(code):
             challenge.failed_attempts += 1
             update_fields = ["failed_attempts"]
             if challenge.failed_attempts >= settings.EMAIL_VERIFICATION_MAX_ATTEMPTS:
                 challenge.used_at = timezone.now()
                 update_fields.append("used_at")
             challenge.save(update_fields=update_fields)
-            raise ValidationError("Invalid or expired verification code.")
+            invalid_code = True
+        else:
+            challenge.mark_used()
+            user.is_email_verified = True
+            user.save(update_fields=("is_email_verified", "updated_at"))
 
-        challenge.mark_used()
-        user.is_email_verified = True
-        user.save(update_fields=("is_email_verified", "updated_at"))
+    if invalid_code:
+        raise ValidationError("Invalid or expired verification code.")
     return user
 
 

@@ -7,8 +7,8 @@ from .models import EmailVerificationChallenge, User
 @admin.register(User)
 class UserAdmin(DjangoUserAdmin):
     ordering = ("email",)
-    list_display = ("email", "name", "role", "is_active", "is_staff", "created_at")
-    list_filter = ("role", "is_active", "is_staff", "is_email_verified")
+    list_display = ("email", "name", "role", "is_approved", "is_active", "is_staff", "created_at")
+    list_filter = ("role", "is_approved", "is_active", "is_staff", "is_email_verified")
     search_fields = ("email", "first_name", "last_name")
     readonly_fields = ("created_at", "updated_at", "last_login")
 
@@ -18,7 +18,7 @@ class UserAdmin(DjangoUserAdmin):
             "Personal info",
             {"fields": ("first_name", "last_name", "phone_number", "date_of_birth", "timezone")},
         ),
-        ("Security", {"fields": ("role", "is_email_verified", "accepted_terms_at")}),
+        ("Security", {"fields": ("role", "is_email_verified", "is_approved", "accepted_terms_at")}),
         ("Permissions", {"fields": ("is_active", "is_staff", "is_superuser", "groups", "user_permissions")}),
         ("Important dates", {"fields": ("last_login", "date_joined", "created_at", "updated_at")}),
     )
@@ -27,7 +27,16 @@ class UserAdmin(DjangoUserAdmin):
             None,
             {
                 "classes": ("wide",),
-                "fields": ("email", "first_name", "last_name", "password1", "password2", "role", "is_staff"),
+                "fields": (
+                    "email",
+                    "first_name",
+                    "last_name",
+                    "password1",
+                    "password2",
+                    "role",
+                    "is_approved",
+                    "is_staff",
+                ),
             },
         ),
     )

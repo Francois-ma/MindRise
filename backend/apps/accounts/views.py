@@ -1,8 +1,10 @@
 from django.db import transaction
+from django.shortcuts import get_object_or_404
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.throttling import ScopedRateThrottle
+from rest_framework.views import APIView
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenRefreshView
@@ -12,7 +14,9 @@ from .serializers import (
     EmailVerificationSerializer,
     LoginSerializer,
     LogoutSerializer,
+    PRACTITIONER_APPROVAL_MESSAGE,
     PasswordChangeSerializer,
+    PendingPractitionerSerializer,
     ProfileUpdateSerializer,
     RegisterSerializer,
     ResendEmailVerificationSerializer,
@@ -72,6 +76,8 @@ class EmailVerificationView(generics.GenericAPIView):
             email=serializer.validated_data["email"],
             code=serializer.validated_data["code"],
         )
+        if user.role == User.Role.PRACTITIONER and not user.is_approved:
+            return Response({"detail": PRACTITIONER_APPROVAL_MESSAGE}, status=status.HTTP_403_FORBIDDEN)
         return Response(serializer.to_representation(user))
 
 
@@ -132,6 +138,73 @@ class PasswordChangeView(generics.GenericAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class PendingPractitionerListView(generics.ListAPIView):
+    permission_classes = [permissions.IsAdminUser]
+    serializer_class = PendingPractitionerSerializer
+
+    def get_queryset(self):
+        return (
+            User.objects.filter(role=User.Role.PRACTITIONER, is_approved=False, is_active=True)
+            .select_related("practitioner_profile")
+            .order_by("created_at")
+        )
+
+
+class ApprovePractitionerView(APIView):
+    permission_classes = [permissions.IsAdminUser]
+
+    def patch(self, request, pk):
+        user = get_object_or_404(User.objects.select_related("practitioner_profile"), pk=pk)
+        validation_response = _validate_practitioner_target(request.user, user)
+        if validation_response is not None:
+            return validation_response
+
+        user.is_approved = True
+        user.save(update_fields=["is_approved", "updated_at"])
+        return Response(
+            {
+                "detail": "Practitioner account approved successfully.",
+                "practitioner": PendingPractitionerSerializer(user).data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class DeactivatePractitionerView(APIView):
+    permission_classes = [permissions.IsAdminUser]
+
+    def patch(self, request, pk):
+        user = get_object_or_404(User.objects.select_related("practitioner_profile"), pk=pk)
+        validation_response = _validate_practitioner_target(request.user, user)
+        if validation_response is not None:
+            return validation_response
+
+        user.is_active = False
+        user.is_approved = False
+        user.save(update_fields=["is_active", "is_approved", "updated_at"])
+        return Response(
+            {
+                "detail": "Practitioner account deactivated.",
+                "practitioner": PendingPractitionerSerializer(user).data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+def _validate_practitioner_target(actor, user):
+    if user.role != User.Role.PRACTITIONER:
+        return Response(
+            {"detail": "Only practitioner accounts can be managed from this endpoint."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    if user.pk == actor.pk:
+        return Response(
+            {"detail": "You cannot approve or deactivate your own practitioner account."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    return None
 
 
 def _client_ip(request) -> str | None:

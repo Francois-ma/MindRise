@@ -13,26 +13,32 @@ import {
   RefreshCw,
   ShieldCheck,
   Sparkles,
+  UserCheck,
   UserRound,
+  UserX,
   Wind,
 } from 'lucide-react';
 import {
+  approvePractitioner,
   createGratitudeEntry,
   createMoodEntry,
+  deactivatePractitioner,
   createThoughtReframe,
   fetchCrisisResources,
   fetchLearningContent,
   fetchMoodEntries,
   fetchMoodSummary,
+  fetchPendingPractitioners,
   fetchPersonalizedInsights,
   fetchPractitioners,
   readListPayload,
 } from '../api';
 import { useAuth } from '../auth';
 import { Layout } from '../components/Layout';
+import { PractitionerAvailabilityControl, PractitionerConnectionBoard, SupportConversationInbox } from '../components/PractitionerConnections';
 import '../styles.css';
 
-const tabs = [
+const baseTabs = [
   { key: 'home', label: 'Home', icon: Home },
   { key: 'mood', label: 'Mood', icon: HeartPulse },
   { key: 'insights', label: 'Insights', icon: BarChart3 },
@@ -48,6 +54,11 @@ export function AppDashboard() {
   const auth = useAuth();
   const [activeTab, setActiveTab] = useState('home');
   const [dashboard, setDashboard] = useState({ loading: true, error: '', data: null });
+  const isAdminUser = Boolean(auth.user?.is_staff || auth.user?.is_superuser || auth.user?.role === 'admin');
+  const visibleTabs = useMemo(
+    () => (isAdminUser ? [...baseTabs, { key: 'admin-practitioners', label: 'Approvals', icon: UserCheck }] : baseTabs),
+    [isAdminUser],
+  );
 
   const loadDashboard = useMemo(
     () => async () => {
@@ -86,6 +97,12 @@ export function AppDashboard() {
     loadDashboard();
   }, [loadDashboard]);
 
+  useEffect(() => {
+    if (!isAdminUser && activeTab === 'admin-practitioners') {
+      setActiveTab('home');
+    }
+  }, [activeTab, isAdminUser]);
+
   if (auth.loading) {
     return <AppLoadingScreen />;
   }
@@ -121,7 +138,7 @@ export function AppDashboard() {
 
         <div className="web-app-layout">
           <aside className="web-app-nav" aria-label="MindRise app sections">
-            {tabs.map((tab) => {
+            {visibleTabs.map((tab) => {
               const Icon = tab.icon;
               return (
                 <button className={activeTab === tab.key ? 'is-active' : ''} type="button" key={tab.key} onClick={() => setActiveTab(tab.key)}>
@@ -143,6 +160,7 @@ export function AppDashboard() {
                 data={data}
                 setTab={setActiveTab}
                 onRefresh={loadDashboard}
+                isAdminUser={isAdminUser}
               />
             )}
           </section>
@@ -152,12 +170,13 @@ export function AppDashboard() {
   );
 }
 
-function ActivePanel({ tab, user, token, data, setTab, onRefresh }) {
+function ActivePanel({ tab, user, token, data, setTab, onRefresh, isAdminUser }) {
+  if (tab === 'admin-practitioners') return isAdminUser ? <PendingPractitionersPanel token={token} /> : <HomePanel user={user} data={data} setTab={setTab} />;
   if (tab === 'mood') return <MoodPanel token={token} entries={data.entries} onRefresh={onRefresh} />;
   if (tab === 'insights') return <InsightsPanel summary={data.summary} insights={data.insights} />;
   if (tab === 'reset') return <ResetPanel token={token} />;
   if (tab === 'learn') return <LearnPanel learning={data.learning} />;
-  if (tab === 'support') return <SupportPanel practitioners={data.practitioners} crisis={data.crisis} />;
+  if (tab === 'support') return <SupportPanel token={token} user={user} practitioners={data.practitioners} crisis={data.crisis} />;
   if (tab === 'profile') return <ProfilePanel user={user} summary={data.summary} />;
   return <HomePanel user={user} data={data} setTab={setTab} />;
 }
@@ -349,29 +368,126 @@ function LearnPanel({ learning }) {
   );
 }
 
-function SupportPanel({ practitioners, crisis }) {
+function SupportPanel({ token, user, practitioners, crisis }) {
   const primary = crisis[0];
+  const ownPractitionerProfile = practitioners.find((person) => person.is_my_profile) || null;
+  const isPractitioner = user?.role === 'practitioner';
   return (
     <div className="web-app-stack">
-      <PanelHeading eyebrow="Support" title="Support pathways and care resources." text="See practitioner availability and urgent resource information from the MindRise support backend." />
-      <div className="web-support-grid">
+      <PanelHeading eyebrow="Support" title={isPractitioner ? 'Manage your patient support.' : 'Connect with an online practitioner.'} text={isPractitioner ? 'Control your availability and answer private patient conversations.' : 'Choose a practitioner who is available now, then continue by text, phone call, or video call where configured.'} />
+      <div className="web-support-grid web-support-grid--connect">
         <div className="web-app-card web-app-card--urgent">
           <Activity size={24} aria-hidden="true" />
           <h3>{primary?.title || 'Urgent help'}</h3>
           <p>{primary?.description || 'If you are experiencing a mental health crisis, contact local emergency services immediately.'}</p>
           {primary?.phone_number && <a className="button button--primary" href={`tel:${primary.phone_number}`}>{primary.phone_number}</a>}
         </div>
-        <div className="web-app-card">
-          <h3>Care professionals</h3>
-          <div className="web-list">
-            {practitioners.length ? practitioners.map((person) => (
-              <div className="web-list-row" key={person.id}>
-                <strong>{person.display_name}</strong>
-                <span>{person.is_available ? 'Available' : 'Schedule'}</span>
-                <p>{person.specialization || person.bio || 'MindRise care professional.'}</p>
-              </div>
-            )) : <p>No practitioners are listed yet.</p>}
+        <div className="web-app-card web-app-card--support-connect">
+          <h3>{isPractitioner ? 'Your support availability' : 'Online practitioners'}</h3>
+          {isPractitioner ? (
+            <PractitionerAvailabilityControl token={token} initialProfile={ownPractitionerProfile} />
+          ) : (
+            <PractitionerConnectionBoard token={token} practitioners={practitioners} compact />
+          )}
+        </div>
+      </div>
+      <SupportConversationInbox token={token} role={user?.role} userId={user?.id} />
+    </div>
+  );
+}
+
+function PendingPractitionersPanel({ token }) {
+  const [pending, setPending] = useState({ loading: true, error: '', items: [] });
+  const [actionStatus, setActionStatus] = useState({ type: '', message: '' });
+  const [busyId, setBusyId] = useState(null);
+
+  const loadPending = useMemo(
+    () => async () => {
+      setPending((current) => ({ ...current, loading: true, error: '' }));
+      try {
+        const data = await fetchPendingPractitioners(token);
+        setPending({ loading: false, error: '', items: readListPayload(data) });
+      } catch (error) {
+        setPending({ loading: false, error: error.message, items: [] });
+      }
+    },
+    [token],
+  );
+
+  useEffect(() => {
+    loadPending();
+  }, [loadPending]);
+
+  async function approve(id) {
+    setBusyId(id);
+    setActionStatus({ type: '', message: '' });
+    try {
+      await approvePractitioner(token, id);
+      setActionStatus({ type: 'success', message: 'Practitioner approved.' });
+      await loadPending();
+    } catch (error) {
+      setActionStatus({ type: 'error', message: error.message });
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function deactivate(id) {
+    setBusyId(id);
+    setActionStatus({ type: '', message: '' });
+    try {
+      await deactivatePractitioner(token, id);
+      setActionStatus({ type: 'success', message: 'Practitioner account deactivated.' });
+      await loadPending();
+    } catch (error) {
+      setActionStatus({ type: 'error', message: error.message });
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  return (
+    <div className="web-app-stack">
+      <PanelHeading eyebrow="Admin" title="Pending practitioner approvals." text="Only admin and superuser accounts can approve practitioner access." />
+      {actionStatus.message && <p className={`form-status form-status--${actionStatus.type}`}>{actionStatus.message}</p>}
+      <div className="web-app-card admin-approval-panel">
+        <div className="admin-approval-panel__heading">
+          <div>
+            <h3>Practitioner accounts</h3>
+            <p>{pending.loading ? 'Loading pending accounts.' : `${pending.items.length} pending account${pending.items.length === 1 ? '' : 's'}`}</p>
           </div>
+          <button className="button button--secondary" type="button" onClick={loadPending} disabled={pending.loading}>
+            {pending.loading ? <Loader2 className="spin" size={17} aria-hidden="true" /> : <RefreshCw size={17} aria-hidden="true" />}
+            <span>Refresh</span>
+          </button>
+        </div>
+
+        {pending.error && <div className="web-app-alert"><ShieldCheck size={18} aria-hidden="true" /><span>{pending.error}</span></div>}
+
+        <div className="admin-approval-list">
+          {pending.items.length ? pending.items.map((person) => (
+            <article className="admin-approval-card" key={person.id}>
+              <div>
+                <strong>{person.name || person.email}</strong>
+                <span>{person.email}</span>
+              </div>
+              <dl>
+                <div><dt>Phone</dt><dd>{person.phone_number || 'Not provided'}</dd></div>
+                <div><dt>Specialization</dt><dd>{person.specialization || 'Not provided'}</dd></div>
+                <div><dt>Created</dt><dd>{formatDate(person.created_at)}</dd></div>
+              </dl>
+              <div className="admin-approval-actions">
+                <button className="button button--primary" type="button" onClick={() => approve(person.id)} disabled={busyId === person.id}>
+                  {busyId === person.id ? <Loader2 className="spin" size={17} aria-hidden="true" /> : <UserCheck size={17} aria-hidden="true" />}
+                  <span>Approve</span>
+                </button>
+                <button className="button button--secondary" type="button" onClick={() => deactivate(person.id)} disabled={busyId === person.id}>
+                  <UserX size={17} aria-hidden="true" />
+                  <span>Deactivate</span>
+                </button>
+              </div>
+            </article>
+          )) : <p>{pending.loading ? 'Loading pending practitioners...' : 'No pending practitioner accounts.'}</p>}
         </div>
       </div>
     </div>
@@ -390,6 +506,7 @@ function ProfilePanel({ user, summary }) {
             <div><dt>Email</dt><dd>{user?.email}</dd></div>
             <div><dt>Role</dt><dd>{formatRole(user?.role)}</dd></div>
             <div><dt>Status</dt><dd>{user?.is_email_verified ? 'Verified' : 'Verification required'}</dd></div>
+            <div><dt>Approval</dt><dd>{user?.role === 'practitioner' ? (user?.is_approved ? 'Approved' : 'Pending') : 'Not required'}</dd></div>
           </dl>
         </div>
         <div className="web-app-card">
@@ -457,6 +574,11 @@ function firstName(name = '') {
 
 function formatLabel(value = '') {
   return value.toString().replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function formatDate(value) {
+  if (!value) return '--';
+  return new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(value));
 }
 
 function formatRole(role = '') {

@@ -12,6 +12,8 @@ class PractitionerProfile(models.Model):
     specialization = models.CharField(max_length=150)
     bio = models.TextField(blank=True, max_length=1200)
     license_number = models.CharField(max_length=80)
+    contact_phone = models.CharField(max_length=50, blank=True)
+    video_call_url = models.URLField(blank=True)
     is_available = models.BooleanField(default=False)
     next_available_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -35,6 +37,11 @@ class SupportThread(models.Model):
         AI = "ai", "AI Coach"
         PRACTITIONER = "practitioner", "Practitioner"
 
+    class ContactMethod(models.TextChoices):
+        TEXT = "text", "Text"
+        PHONE = "phone", "Phone call"
+        VIDEO = "video", "Video call"
+
     patient = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -49,6 +56,7 @@ class SupportThread(models.Model):
     )
     thread_type = models.CharField(max_length=24, choices=ThreadType.choices)
     subject = models.CharField(max_length=160, blank=True)
+    contact_method = models.CharField(max_length=16, choices=ContactMethod.choices, default=ContactMethod.TEXT)
     is_closed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

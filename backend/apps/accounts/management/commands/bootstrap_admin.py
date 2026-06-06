@@ -47,6 +47,7 @@ class Command(BaseCommand):
                     "is_staff": True,
                     "is_superuser": True,
                     "is_email_verified": True,
+                    "is_approved": True,
                 },
             )
 
@@ -58,6 +59,7 @@ class Command(BaseCommand):
                 "is_staff": True,
                 "is_superuser": True,
                 "is_email_verified": True,
+                "is_approved": True,
             }
 
             if not user.first_name:

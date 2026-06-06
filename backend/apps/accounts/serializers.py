@@ -3,6 +3,7 @@ from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
 
 User = get_user_model()
+PRACTITIONER_APPROVAL_MESSAGE = "Your practitioner account is waiting for superuser approval."
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -20,9 +21,21 @@ class UserSerializer(serializers.ModelSerializer):
             "phone_number",
             "timezone",
             "is_email_verified",
+            "is_approved",
+            "is_staff",
+            "is_superuser",
             "created_at",
         )
-        read_only_fields = ("id", "email", "role", "is_email_verified", "created_at")
+        read_only_fields = (
+            "id",
+            "email",
+            "role",
+            "is_email_verified",
+            "is_approved",
+            "is_staff",
+            "is_superuser",
+            "created_at",
+        )
 
 
 class AuthTokenResponseMixin:
@@ -40,6 +53,13 @@ class RegisterSerializer(serializers.Serializer):
     email = serializers.EmailField(write_only=True)
     password = serializers.CharField(write_only=True, trim_whitespace=False, min_length=10)
     accepted_terms = serializers.BooleanField(write_only=True)
+    role = serializers.CharField(required=False, default=User.Role.PATIENT, write_only=True)
+
+    role_aliases = {
+        "user": User.Role.PATIENT,
+        "patient": User.Role.PATIENT,
+        "practitioner": User.Role.PRACTITIONER,
+    }
 
     def validate_email(self, value: str) -> str:
         email = value.lower()
@@ -56,14 +76,23 @@ class RegisterSerializer(serializers.Serializer):
             raise serializers.ValidationError("You must accept the terms to create an account.")
         return value
 
+    def validate_role(self, value: str) -> str:
+        role = self.role_aliases.get(value.lower())
+        if role is None:
+            raise serializers.ValidationError("Choose either user or practitioner.")
+        return role
+
     def create(self, validated_data):
         name = validated_data["name"].strip()
         first_name, _, last_name = name.partition(" ")
+        role = validated_data.get("role", User.Role.PATIENT)
         user = User(
             email=validated_data["email"],
             username=validated_data["email"],
             first_name=first_name,
             last_name=last_name,
+            role=role,
+            is_approved=role != User.Role.PRACTITIONER,
         )
         user.set_password(validated_data["password"])
         user.accept_terms()
@@ -74,6 +103,8 @@ class RegisterSerializer(serializers.Serializer):
         return {
             "email": instance.email,
             "detail": "Account created. Check your email for the verification code.",
+            "role": instance.role,
+            "is_approved": instance.is_approved,
         }
 
 
@@ -89,6 +120,8 @@ class LoginSerializer(serializers.Serializer, AuthTokenResponseMixin):
             raise serializers.ValidationError("Invalid email or password.")
         if not user.is_active:
             raise serializers.ValidationError("This account is disabled.")
+        if user.role == User.Role.PRACTITIONER and not user.is_approved:
+            raise serializers.ValidationError(PRACTITIONER_APPROVAL_MESSAGE)
         if not user.is_email_verified and not user.is_staff:
             raise serializers.ValidationError("Verify your email before signing in.")
         attrs["user"] = user
@@ -144,3 +177,29 @@ class EmailVerificationSerializer(serializers.Serializer, AuthTokenResponseMixin
 
 class ResendEmailVerificationSerializer(serializers.Serializer):
     email = serializers.EmailField(write_only=True)
+
+
+class PendingPractitionerSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(read_only=True)
+    specialization = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = (
+            "id",
+            "email",
+            "name",
+            "first_name",
+            "last_name",
+            "phone_number",
+            "specialization",
+            "role",
+            "is_approved",
+            "is_active",
+            "created_at",
+        )
+        read_only_fields = fields
+
+    def get_specialization(self, obj) -> str:
+        profile = getattr(obj, "practitioner_profile", None)
+        return profile.specialization if profile else ""

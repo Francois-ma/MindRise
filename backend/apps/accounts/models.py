@@ -22,12 +22,14 @@ class UserManager(BaseUserManager):
     def create_user(self, email: str, password: str | None = None, **extra_fields):
         extra_fields.setdefault("is_staff", False)
         extra_fields.setdefault("is_superuser", False)
+        extra_fields.setdefault("is_approved", True)
         return self._create_user(email, password, **extra_fields)
 
     def create_superuser(self, email: str, password: str | None = None, **extra_fields):
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
         extra_fields.setdefault("role", User.Role.ADMIN)
+        extra_fields.setdefault("is_approved", True)
 
         if extra_fields.get("is_staff") is not True:
             raise ValueError("Superuser must have is_staff=True.")
@@ -52,6 +54,7 @@ class User(AbstractUser):
     date_of_birth = models.DateField(null=True, blank=True)
     timezone = models.CharField(max_length=64, default="UTC")
     is_email_verified = models.BooleanField(default=False)
+    is_approved = models.BooleanField(default=True)
     accepted_terms_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

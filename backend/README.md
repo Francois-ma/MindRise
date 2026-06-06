@@ -124,6 +124,7 @@ The free Render web service uses an ephemeral filesystem, so uploaded learning m
 - `GET /api/v1/learning/materials/`
 - `GET/POST /api/v1/learning/bookmarks/`
 - `GET /api/v1/support/practitioners/`
+- `PATCH /api/v1/support/practitioners/me/availability/`
 - `GET/POST /api/v1/support/threads/`
 - `GET/POST /api/v1/support/threads/{id}/messages/`
 
@@ -140,15 +141,15 @@ DJANGO_SUPERUSER_LAST_NAME=Admin
 
 Deploy or redeploy the API after setting them, then log in at `/admin/`. After the admin account works, remove `DJANGO_SUPERUSER_PASSWORD` from Render and redeploy. To intentionally reset the password later, temporarily set `DJANGO_SUPERUSER_RESET_PASSWORD=true` with a new password and redeploy once.
 
-## Adding Psychologists
+## Adding Practitioners
 
-Admins can add psychologists in Django Admin:
+Admins can add practitioners in Django Admin:
 
-1. Create a user account for the psychologist.
+1. Create a user account for the practitioner.
 2. Open `Practitioner profiles`.
-3. Add a profile with display name, specialization, license number, availability, and optional bio.
+3. Add a profile with display name, specialization, license number, availability, phone/video connection options, and optional bio.
 
-Saving a practitioner profile automatically marks the linked user as `practitioner`. Patients can then see the psychologist in the mobile Support screen and start a private consultation thread.
+Saving a practitioner profile automatically marks the linked user as `practitioner`. Patients can then see online practitioners in the Support screen, start a private text thread, or use configured phone and video call options.
 
 ## Uploading Learning Materials
 

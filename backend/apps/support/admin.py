@@ -5,13 +5,14 @@ from .models import CrisisResource, PractitionerProfile, SupportMessage, Support
 
 @admin.register(PractitionerProfile)
 class PractitionerProfileAdmin(admin.ModelAdmin):
-    list_display = ("display_name", "specialization", "is_available", "next_available_at")
+    list_display = ("display_name", "specialization", "is_available", "contact_phone", "next_available_at")
     list_filter = ("is_available", "specialization")
-    search_fields = ("display_name", "license_number", "user__email")
+    search_fields = ("display_name", "license_number", "contact_phone", "user__email")
     autocomplete_fields = ("user",)
     fieldsets = (
-        ("Psychologist account", {"fields": ("user", "display_name", "license_number")}),
+        ("Practitioner account", {"fields": ("user", "display_name", "license_number")}),
         ("Consultation profile", {"fields": ("specialization", "bio", "is_available", "next_available_at")}),
+        ("Connection options", {"fields": ("contact_phone", "video_call_url")}),
     )
 
     def save_model(self, request, obj, form, change):
@@ -28,8 +29,8 @@ class SupportMessageInline(admin.TabularInline):
 
 @admin.register(SupportThread)
 class SupportThreadAdmin(admin.ModelAdmin):
-    list_display = ("patient", "thread_type", "practitioner", "is_closed", "updated_at")
-    list_filter = ("thread_type", "is_closed")
+    list_display = ("patient", "thread_type", "contact_method", "practitioner", "is_closed", "updated_at")
+    list_filter = ("thread_type", "contact_method", "is_closed")
     search_fields = ("patient__email", "subject")
     autocomplete_fields = ("patient", "practitioner")
     inlines = [SupportMessageInline]

@@ -4,6 +4,7 @@ from .models import CrisisResource, PractitionerProfile, SupportMessage, Support
 from .serializers import (
     CreateMessageSerializer,
     CrisisResourceSerializer,
+    PractitionerAvailabilitySerializer,
     PractitionerProfileSerializer,
     SupportMessageSerializer,
     SupportThreadSerializer,
@@ -12,9 +13,23 @@ from .serializers import (
 
 class PractitionerProfileViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = PractitionerProfileSerializer
-    queryset = PractitionerProfile.objects.filter(user__is_active=True)
+    queryset = PractitionerProfile.objects.select_related("user").filter(user__is_active=True, user__is_approved=True)
     filterset_fields = ("is_available", "specialization")
     search_fields = ("display_name", "specialization", "bio")
+
+    @decorators.action(detail=False, methods=["patch"], url_path="me/availability")
+    def me_availability(self, request):
+        profile = getattr(request.user, "practitioner_profile", None)
+        if not profile:
+            return response.Response(
+                {"detail": "Only practitioner accounts can update practitioner availability."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        serializer = PractitionerAvailabilitySerializer(profile, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return response.Response(PractitionerProfileSerializer(profile, context=self.get_serializer_context()).data)
 
 
 class SupportThreadViewSet(viewsets.ModelViewSet):
@@ -27,7 +42,11 @@ class SupportThreadViewSet(viewsets.ModelViewSet):
             return self.queryset
         user = self.request.user
         practitioner_profile = getattr(user, "practitioner_profile", None)
-        queryset = SupportThread.objects.select_related("practitioner", "practitioner__user", "patient")
+        queryset = (
+            SupportThread.objects
+            .select_related("practitioner", "practitioner__user", "patient")
+            .prefetch_related("messages")
+        )
         if practitioner_profile:
             return queryset.filter(practitioner=practitioner_profile)
         return queryset.filter(patient=user)

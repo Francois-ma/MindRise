@@ -88,14 +88,20 @@ export async function fetchCurrentUser(token) {
 }
 
 export async function registerAccount(payload) {
+  const body = {
+    name: payload.name,
+    email: payload.email,
+    password: payload.password,
+    accepted_terms: true,
+  };
+
+  if (payload.role) {
+    body.role = payload.role;
+  }
+
   return request('/auth/register/', {
     method: 'POST',
-    body: JSON.stringify({
-      name: payload.name,
-      email: payload.email,
-      password: payload.password,
-      accepted_terms: true,
-    }),
+    body: JSON.stringify(body),
   });
 }
 
@@ -143,6 +149,68 @@ export async function fetchPersonalizedInsights(token) {
 
 export async function fetchPractitioners(token) {
   return request('/support/practitioners/?limit=20&ordering=-is_available,next_available_at', { token });
+}
+
+export async function fetchOnlinePractitioners(token) {
+  return request('/support/practitioners/?is_available=true&limit=30&ordering=-is_available,next_available_at', { token });
+}
+
+export async function createSupportThread(token, payload) {
+  return request('/support/threads/', {
+    token,
+    method: 'POST',
+    body: JSON.stringify({
+      thread_type: 'practitioner',
+      practitioner_id: payload.practitionerId,
+      contact_method: payload.contactMethod || 'text',
+      subject: payload.subject || '',
+    }),
+  });
+}
+
+export async function fetchSupportThreads(token) {
+  return request('/support/threads/?limit=50&ordering=-updated_at', { token });
+}
+
+export async function fetchSupportMessages(token, threadId) {
+  return request(`/support/threads/${threadId}/messages/`, { token });
+}
+
+export async function sendSupportMessage(token, threadId, body) {
+  return request(`/support/threads/${threadId}/messages/`, {
+    token,
+    method: 'POST',
+    body: JSON.stringify({ body }),
+  });
+}
+
+export async function updatePractitionerAvailability(token, payload) {
+  return request('/support/practitioners/me/availability/', {
+    token,
+    method: 'PATCH',
+    body: JSON.stringify({
+      is_available: Boolean(payload.isAvailable),
+      next_available_at: payload.nextAvailableAt || null,
+    }),
+  });
+}
+
+export async function fetchPendingPractitioners(token) {
+  return request('/admin/practitioners/pending/?limit=50', { token });
+}
+
+export async function approvePractitioner(token, id) {
+  return request(`/admin/practitioners/${id}/approve/`, {
+    token,
+    method: 'PATCH',
+  });
+}
+
+export async function deactivatePractitioner(token, id) {
+  return request(`/admin/practitioners/${id}/deactivate/`, {
+    token,
+    method: 'PATCH',
+  });
 }
 
 export async function fetchCrisisResources() {
