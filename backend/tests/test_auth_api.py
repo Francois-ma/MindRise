@@ -253,6 +253,7 @@ def test_admin_can_list_and_approve_pending_practitioner():
     assert response.status_code == 200
     practitioner.refresh_from_db()
     assert practitioner.is_approved is True
+    assert practitioner.practitioner_profile.display_name == practitioner.name
 
 
 @pytest.mark.django_db

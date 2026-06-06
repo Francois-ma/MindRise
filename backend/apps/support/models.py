@@ -25,6 +25,20 @@ class PractitionerProfile(models.Model):
     def __str__(self) -> str:
         return self.display_name
 
+    @classmethod
+    def ensure_for_user(cls, user):
+        if user.role != user.Role.PRACTITIONER:
+            raise ValueError("A practitioner profile can only belong to a practitioner account.")
+        profile, _ = cls.objects.get_or_create(
+            user=user,
+            defaults={
+                "display_name": user.name,
+                "specialization": "",
+                "license_number": "",
+            },
+        )
+        return profile
+
     def save(self, *args, **kwargs):
         if self.user_id and self.user.role != self.user.Role.PRACTITIONER:
             self.user.role = self.user.Role.PRACTITIONER

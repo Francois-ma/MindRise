@@ -19,13 +19,18 @@ class PractitionerProfileViewSet(viewsets.ReadOnlyModelViewSet):
 
     @decorators.action(detail=False, methods=["patch"], url_path="me/availability")
     def me_availability(self, request):
-        profile = getattr(request.user, "practitioner_profile", None)
-        if not profile:
+        if request.user.role != request.user.Role.PRACTITIONER:
             return response.Response(
                 {"detail": "Only practitioner accounts can update practitioner availability."},
                 status=status.HTTP_403_FORBIDDEN,
             )
+        if not request.user.is_approved:
+            return response.Response(
+                {"detail": "Your practitioner account is waiting for superuser approval."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
+        profile = PractitionerProfile.ensure_for_user(request.user)
         serializer = PractitionerAvailabilitySerializer(profile, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()

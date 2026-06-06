@@ -9,6 +9,8 @@ from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenRefreshView
 
+from apps.support.models import PractitionerProfile
+
 from .models import User
 from .serializers import (
     EmailVerificationSerializer,
@@ -163,6 +165,7 @@ class ApprovePractitionerView(APIView):
 
         user.is_approved = True
         user.save(update_fields=["is_approved", "updated_at"])
+        PractitionerProfile.ensure_for_user(user)
         return Response(
             {
                 "detail": "Practitioner account approved successfully.",

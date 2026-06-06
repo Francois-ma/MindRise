@@ -267,6 +267,64 @@ def test_practitioner_can_update_own_online_availability():
 
 
 @pytest.mark.django_db
+def test_approved_practitioner_without_profile_can_update_availability():
+    user_model = get_user_model()
+    practitioner_user = user_model.objects.create_user(
+        email="new-practitioner@example.com",
+        password="MindRiseStrong123!",
+        first_name="New",
+        last_name="Practitioner",
+        role=user_model.Role.PRACTITIONER,
+        is_approved=True,
+    )
+    client = APIClient()
+    client.force_authenticate(user=practitioner_user)
+
+    response = client.patch(reverse("practitioner-me-availability"), {"is_available": True}, format="json")
+
+    assert response.status_code == 200
+    profile = PractitionerProfile.objects.get(user=practitioner_user)
+    assert profile.display_name == "New Practitioner"
+    assert profile.is_available is True
+    assert response.data["is_my_profile"] is True
+
+
+@pytest.mark.django_db
+def test_patient_cannot_update_practitioner_availability():
+    patient = get_user_model().objects.create_user(
+        email="availability-patient@example.com",
+        password="MindRiseStrong123!",
+        first_name="Patient",
+    )
+    client = APIClient()
+    client.force_authenticate(user=patient)
+
+    response = client.patch(reverse("practitioner-me-availability"), {"is_available": True}, format="json")
+
+    assert response.status_code == 403
+    assert not PractitionerProfile.objects.filter(user=patient).exists()
+
+
+@pytest.mark.django_db
+def test_pending_practitioner_cannot_update_availability():
+    user_model = get_user_model()
+    practitioner_user = user_model.objects.create_user(
+        email="pending-availability@example.com",
+        password="MindRiseStrong123!",
+        first_name="Pending",
+        role=user_model.Role.PRACTITIONER,
+        is_approved=False,
+    )
+    client = APIClient()
+    client.force_authenticate(user=practitioner_user)
+
+    response = client.patch(reverse("practitioner-me-availability"), {"is_available": True}, format="json")
+
+    assert response.status_code == 403
+    assert not PractitionerProfile.objects.filter(user=practitioner_user).exists()
+
+
+@pytest.mark.django_db
 def test_pending_practitioner_profile_is_not_listed_for_support():
     user_model = get_user_model()
     patient = user_model.objects.create_user(
