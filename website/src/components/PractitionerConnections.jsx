@@ -8,7 +8,7 @@ import { SectionIntro } from './Layout';
 const contactMethods = {
   text: { label: 'Text', icon: MessageCircle },
   phone: { label: 'Call', icon: Phone },
-  video: { label: 'Video', icon: Video },
+  video: { label: 'WhatsApp', icon: Video },
 };
 
 export function PractitionerConnectionSection() {
@@ -322,8 +322,8 @@ export function PractitionerConnectionBoard({ token, practitioners = null, autoL
       if (contactMethod === 'phone' && person.phone_number && typeof window !== 'undefined') {
         window.location.href = `tel:${person.phone_number}`;
       }
-      if (contactMethod === 'video' && person.video_call_url && typeof window !== 'undefined') {
-        window.open(person.video_call_url, '_blank', 'noopener,noreferrer');
+      if (contactMethod === 'video' && person.whatsapp_url && typeof window !== 'undefined') {
+        window.open(person.whatsapp_url, '_blank', 'noopener,noreferrer');
       }
     } catch (error) {
       setStatus({ type: 'error', message: error.message });
@@ -417,7 +417,7 @@ function PractitionerCard({ person, busyAction, onConnect }) {
       <div className="practitioner-action-grid" aria-label={`Connection options for ${person.display_name}`}>
         {Object.entries(contactMethods).map(([method, config]) => {
           const Icon = config.icon;
-          const disabled = (method === 'phone' && !person.can_call) || (method === 'video' && !person.can_video_call);
+          const disabled = (method === 'phone' && !person.can_call) || (method === 'video' && !person.can_whatsapp);
           const busy = busyAction === `${person.id}:${method}`;
           return (
             <button
@@ -438,7 +438,7 @@ function PractitionerCard({ person, busyAction, onConnect }) {
   );
 }
 function formatConnectionMethod(method = 'text') {
-  return method === 'phone' ? 'Phone call' : method === 'video' ? 'Video call' : 'Text';
+  return method === 'phone' ? 'Phone call' : method === 'video' ? 'WhatsApp' : 'Text';
 }
 
 function formatConversationTime(value) {

@@ -14,6 +14,7 @@ from .serializers import (
     CreateMessageSerializer,
     CrisisResourceSerializer,
     PractitionerAvailabilitySerializer,
+    PractitionerContactSerializer,
     PractitionerProfileSerializer,
     SupportMessageSerializer,
     SupportNotificationSerializer,
@@ -56,6 +57,25 @@ class PractitionerProfileViewSet(viewsets.ReadOnlyModelViewSet):
 
         profile = PractitionerProfile.ensure_for_user(request.user)
         serializer = PractitionerAvailabilitySerializer(profile, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return response.Response(PractitionerProfileSerializer(profile, context=self.get_serializer_context()).data)
+
+    @decorators.action(detail=False, methods=["patch"], url_path="me/contact")
+    def me_contact(self, request):
+        if request.user.role != request.user.Role.PRACTITIONER:
+            return response.Response(
+                {"detail": "Only practitioner accounts can update practitioner contact options."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        if not request.user.is_approved:
+            return response.Response(
+                {"detail": "Your practitioner account is waiting for superuser approval."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        profile = PractitionerProfile.ensure_for_user(request.user)
+        serializer = PractitionerContactSerializer(profile, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return response.Response(PractitionerProfileSerializer(profile, context=self.get_serializer_context()).data)

@@ -6598,3 +6598,47 @@ textarea:focus-visible {
   .support-chat-message-list article { max-width: 92%; }
   .support-workspace-tabs { overflow-x: auto; }
 }
+.practitioner-contact-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 0.8fr) auto;
+  gap: 18px;
+  align-items: end;
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.practitioner-contact-panel h2 {
+  margin: 4px 0 6px;
+  font-size: 1.08rem;
+}
+
+.practitioner-contact-panel p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.practitioner-contact-panel label {
+  display: grid;
+  gap: 7px;
+  color: var(--text);
+  font-weight: 700;
+}
+
+.practitioner-contact-panel input {
+  width: 100%;
+}
+
+.support-request-practitioner__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+@media (max-width: 840px) {
+  .practitioner-contact-panel {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+}

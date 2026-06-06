@@ -25,6 +25,7 @@ class PractitionerHomeScreen extends ConsumerStatefulWidget {
 class _PractitionerHomeScreenState
     extends ConsumerState<PractitionerHomeScreen> {
   bool _isSavingAvailability = false;
+  bool _isSavingContact = false;
 
   Future<void> _refresh() async {
     await Future.wait([

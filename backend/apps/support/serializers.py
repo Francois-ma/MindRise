@@ -1,3 +1,5 @@
+import re
+
 from django.contrib.auth import get_user_model
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
@@ -18,6 +20,8 @@ class PractitionerProfileSerializer(serializers.ModelSerializer):
     phone_number = serializers.SerializerMethodField()
     can_call = serializers.SerializerMethodField()
     can_video_call = serializers.SerializerMethodField()
+    can_whatsapp = serializers.SerializerMethodField()
+    whatsapp_url = serializers.SerializerMethodField()
     is_my_profile = serializers.SerializerMethodField()
 
     class Meta:
@@ -34,6 +38,8 @@ class PractitionerProfileSerializer(serializers.ModelSerializer):
             "video_call_url",
             "can_call",
             "can_video_call",
+            "can_whatsapp",
+            "whatsapp_url",
             "is_my_profile",
         )
 
@@ -44,12 +50,31 @@ class PractitionerProfileSerializer(serializers.ModelSerializer):
         return bool(self.get_phone_number(obj))
 
     def get_can_video_call(self, obj) -> bool:
-        return bool(obj.video_call_url)
+        return bool(obj.video_call_url or self.get_phone_number(obj))
+
+    def get_can_whatsapp(self, obj) -> bool:
+        return bool(self.get_phone_number(obj))
+
+    def get_whatsapp_url(self, obj) -> str:
+        digits = re.sub(r"\D", "", self.get_phone_number(obj))
+        return f"https://wa.me/{digits}" if digits else ""
 
     def get_is_my_profile(self, obj) -> bool:
         request = self.context.get("request")
         return bool(request and request.user.is_authenticated and obj.user_id == request.user.id)
 
+class PractitionerContactSerializer(serializers.ModelSerializer):
+    phone_number = serializers.CharField(source="contact_phone", required=False, allow_blank=True, max_length=50)
+
+    class Meta:
+        model = PractitionerProfile
+        fields = ("phone_number", "video_call_url")
+
+    def validate_phone_number(self, value):
+        digits = re.sub(r"\D", "", value)
+        if value and not 8 <= len(digits) <= 15:
+            raise serializers.ValidationError("Enter a valid international telephone number.")
+        return value.strip()
 
 class PractitionerAvailabilitySerializer(serializers.ModelSerializer):
     is_available = serializers.BooleanField(required=False, write_only=True)
@@ -154,8 +179,8 @@ class SupportThreadSerializer(serializers.ModelSerializer):
         phone_number = practitioner.contact_phone or practitioner.user.phone_number
         if contact_method == SupportThread.ContactMethod.PHONE and not phone_number:
             raise serializers.ValidationError("This practitioner does not have a phone call option yet.")
-        if contact_method == SupportThread.ContactMethod.VIDEO and not practitioner.video_call_url:
-            raise serializers.ValidationError("This practitioner does not have a video call option yet.")
+        if contact_method == SupportThread.ContactMethod.VIDEO and not (practitioner.video_call_url or phone_number):
+            raise serializers.ValidationError("This practitioner does not have a WhatsApp or video call option yet.")
         return attrs
 
     @extend_schema_field(SupportMessageSerializer)

@@ -482,3 +482,83 @@ def test_only_accepted_session_participants_can_manage_calls():
     accepted = client.post(reverse("support-call-accept", args=[created.data["id"]]), format="json")
     assert accepted.status_code == 200
     assert accepted.data["status"] == "accepted"
+
+
+@pytest.mark.django_db
+def test_patient_sees_only_approved_online_practitioners():
+    user_model = get_user_model()
+    patient = user_model.objects.create_user(
+        email="presence-patient@example.com",
+        password="MindRiseStrong123!",
+        first_name="Patient",
+    )
+    for label, presence in (("Online", "online"), ("Busy", "busy"), ("Offline", "offline")):
+        practitioner_user = user_model.objects.create_user(
+            email=f"{label.lower()}-presence@example.com",
+            password="MindRiseStrong123!",
+            role=user_model.Role.PRACTITIONER,
+            is_approved=True,
+        )
+        PractitionerProfile.objects.create(
+            user=practitioner_user,
+            display_name=f"Dr. {label}",
+            specialization="Support",
+            license_number=f"PRES-{label}",
+            availability_status=presence,
+        )
+    client = APIClient()
+    client.force_authenticate(user=patient)
+
+    response = client.get(reverse("practitioner-list"))
+
+    assert response.status_code == 200
+    names = {item["display_name"] for item in response.data["results"]}
+    assert names == {"Dr. Online"}
+@pytest.mark.django_db
+def test_approved_practitioner_can_update_phone_for_calls_and_whatsapp():
+    user_model = get_user_model()
+    practitioner_user = user_model.objects.create_user(
+        email="contact-practitioner@example.com",
+        password="MindRiseStrong123!",
+        role=user_model.Role.PRACTITIONER,
+        is_approved=True,
+    )
+    PractitionerProfile.objects.create(
+        user=practitioner_user,
+        display_name="Dr. Contact",
+        specialization="Support",
+        license_number="CONTACT-1",
+    )
+    client = APIClient()
+    client.force_authenticate(user=practitioner_user)
+
+    response = client.patch(
+        reverse("practitioner-me-contact"),
+        {"phone_number": "+250 788 123 456"},
+        format="json",
+    )
+
+    assert response.status_code == 200
+    assert response.data["phone_number"] == "+250 788 123 456"
+    assert response.data["can_call"] is True
+    assert response.data["can_whatsapp"] is True
+    assert response.data["can_video_call"] is True
+    assert response.data["whatsapp_url"] == "https://wa.me/250788123456"
+
+
+@pytest.mark.django_db
+def test_patient_cannot_update_practitioner_contact_options():
+    patient = get_user_model().objects.create_user(
+        email="contact-patient@example.com",
+        password="MindRiseStrong123!",
+    )
+    client = APIClient()
+    client.force_authenticate(user=patient)
+
+    response = client.patch(
+        reverse("practitioner-me-contact"),
+        {"phone_number": "+250788123456"},
+        format="json",
+    )
+
+    assert response.status_code == 403

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -27,9 +29,22 @@ class _SupportScreenState extends ConsumerState<SupportScreen> {
   final _messageController = TextEditingController();
   String? _busyConnection;
   bool _availabilitySaving = false;
+  Timer? _pollTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _pollTimer = Timer.periodic(const Duration(seconds: 10), (_) {
+      ref.invalidate(practitionersProvider);
+      ref.invalidate(onlinePractitionersProvider);
+      ref.invalidate(supportThreadsProvider);
+      ref.invalidate(supportNotificationsProvider);
+    });
+  }
 
   @override
   void dispose() {
+    _pollTimer?.cancel();
     _messageController.dispose();
     super.dispose();
   }
@@ -44,6 +59,7 @@ class _SupportScreenState extends ConsumerState<SupportScreen> {
       ref.refresh(onlinePractitionersProvider.future),
       ref.refresh(supportThreadsProvider.future),
       ref.refresh(crisisResourcesProvider.future),
+      ref.refresh(supportNotificationsProvider.future),
     ]);
   }
 
@@ -61,8 +77,29 @@ class _SupportScreenState extends ConsumerState<SupportScreen> {
           .startPractitionerThread(practitioner, contactMethod: method);
       ref.invalidate(supportThreadsProvider);
 
-      if (mounted) {
+      if (!mounted) return;
+      if (method == SupportContactMethod.text) {
         context.push('/support/thread/${thread.id}', extra: thread);
+        return;
+      }
+
+      final uri = method == SupportContactMethod.phone
+          ? Uri(
+              scheme: 'tel',
+              path: practitioner.phoneNumber.replaceAll(RegExp(r'\s+'), ''),
+            )
+          : Uri.tryParse(practitioner.whatsappUrl);
+      final opened =
+          uri != null &&
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!opened && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${method.label} could not be opened on this device.',
+            ),
+          ),
+        );
       }
     } on Object catch (error) {
       if (mounted) {
@@ -112,6 +149,7 @@ class _SupportScreenState extends ConsumerState<SupportScreen> {
     final practitioners = ref.watch(practitionersProvider);
     final threads = ref.watch(supportThreadsProvider);
     final crisisResources = ref.watch(crisisResourcesProvider);
+    final notifications = ref.watch(supportNotificationsProvider);
     final isPractitioner = role == AppUserRole.practitioner;
     final isPatient = role == AppUserRole.patient;
 
@@ -153,6 +191,12 @@ class _SupportScreenState extends ConsumerState<SupportScreen> {
                       ),
                     ],
                   ),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                notifications.when(
+                  data: (items) => _NotificationCard(notifications: items),
+                  loading: () => const SizedBox.shrink(),
+                  error: (error, stackTrace) => const SizedBox.shrink(),
                 ),
                 const SizedBox(height: AppSpacing.xl),
                 if (isPractitioner) ...[
@@ -362,6 +406,41 @@ class _AiAssistantCard extends StatelessWidget {
   }
 }
 
+class _NotificationCard extends StatelessWidget {
+  const _NotificationCard({required this.notifications});
+
+  final List<SupportNotification> notifications;
+
+  @override
+  Widget build(BuildContext context) {
+    final unread = notifications.where((item) => !item.isRead).take(3).toList();
+    if (unread.isEmpty) return const SizedBox.shrink();
+    return MRCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.notifications_active_outlined, color: AppColors.blue),
+              SizedBox(width: AppSpacing.sm),
+              Text(
+                'Support updates',
+                style: TextStyle(fontWeight: FontWeight.w800),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          for (final item in unread)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text('${item.title}: ${item.body}'),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 class _AvailabilityCard extends StatelessWidget {
   const _AvailabilityCard({
     required this.practitioner,
@@ -418,7 +497,7 @@ class _AvailabilityCard extends StatelessWidget {
               const SizedBox(width: 14),
               Expanded(
                 child: Text(
-                  'You are ',
+                  'You are ${availabilityStatus.label.toLowerCase()}',
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
@@ -553,10 +632,10 @@ class _PractitionerCard extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: _ConnectionButton(
-                  label: 'Video',
-                  icon: Icons.videocam_outlined,
+                  label: 'WhatsApp',
+                  icon: Icons.chat_outlined,
                   isLoading: _isBusy(SupportContactMethod.video),
-                  onPressed: practitioner.canVideoCall
+                  onPressed: practitioner.canWhatsApp
                       ? () => onConnect(SupportContactMethod.video)
                       : null,
                 ),
@@ -879,6 +958,6 @@ IconData _methodIcon(SupportContactMethod method) {
   return switch (method) {
     SupportContactMethod.text => Icons.chat_bubble_outline_rounded,
     SupportContactMethod.phone => Icons.phone_outlined,
-    SupportContactMethod.video => Icons.videocam_outlined,
+    SupportContactMethod.video => Icons.chat_outlined,
   };
 }

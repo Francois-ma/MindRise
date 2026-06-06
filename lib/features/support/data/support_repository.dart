@@ -163,6 +163,14 @@ class SupportRepository {
     return Practitioner.fromJson(response.data ?? const {});
   }
 
+  Future<Practitioner> updateContact({required String phoneNumber}) async {
+    final response = await _dio.patch<Map<String, dynamic>>(
+      '/support/practitioners/me/contact/',
+      data: {'phone_number': phoneNumber.trim()},
+    );
+    return Practitioner.fromJson(response.data ?? const {});
+  }
+
   Future<SupportThread> acceptSession(int threadId) =>
       _sessionAction(threadId, 'accept');
   Future<SupportThread> rejectSession(int threadId) =>
@@ -276,7 +284,7 @@ enum SupportSessionStatus {
 enum SupportContactMethod {
   text('text', 'Text', 'Private text conversation'),
   phone('phone', 'Phone call', 'Audio call request'),
-  video('video', 'Video call', 'Video call request');
+  video('video', 'WhatsApp', 'WhatsApp conversation or video call');
 
   const SupportContactMethod(this.apiValue, this.label, this.description);
   final String apiValue;
@@ -409,6 +417,8 @@ class Practitioner {
     required this.videoCallUrl,
     required this.canCall,
     required this.canVideoCall,
+    required this.canWhatsApp,
+    required this.whatsappUrl,
     required this.isMyProfile,
     this.nextAvailableAt,
   });
@@ -423,6 +433,8 @@ class Practitioner {
   final String videoCallUrl;
   final bool canCall;
   final bool canVideoCall;
+  final bool canWhatsApp;
+  final String whatsappUrl;
   final bool isMyProfile;
   final DateTime? nextAvailableAt;
 
@@ -439,6 +451,8 @@ class Practitioner {
     videoCallUrl: json['video_call_url']?.toString().trim() ?? '',
     canCall: json['can_call'] == true,
     canVideoCall: json['can_video_call'] == true,
+    canWhatsApp: json['can_whatsapp'] == true,
+    whatsappUrl: json['whatsapp_url']?.toString().trim() ?? '',
     isMyProfile: json['is_my_profile'] == true,
     nextAvailableAt: DateTime.tryParse(
       json['next_available_at']?.toString() ?? '',

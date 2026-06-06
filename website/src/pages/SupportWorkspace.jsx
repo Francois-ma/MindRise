@@ -32,6 +32,7 @@ import {
   sendSupportMessage,
   startSupportCall,
   updatePractitionerAvailability,
+  updatePractitionerContact,
   updateSupportCall,
 } from '../api';
 import { useAuth } from '../auth';
@@ -93,10 +94,14 @@ export function SupportRequestPage() {
                 <span className="support-presence support-presence--online"><Wifi size={14} />Online</span>
               </div>
               {person.bio && <p>{person.bio}</p>}
-              <button className="button button--primary" type="button" disabled={busyId === person.id} onClick={() => requestSupport(person)}>
-                {busyId === person.id ? <Loader2 className="spin" size={17} /> : <MessageCircle size={17} />}
-                <span>Request private support</span>
-              </button>
+              <div className="support-request-practitioner__actions">
+                <button className="button button--primary" type="button" disabled={busyId === person.id} onClick={() => requestSupport(person)}>
+                  {busyId === person.id ? <Loader2 className="spin" size={17} /> : <MessageCircle size={17} />}
+                  <span>Request private support</span>
+                </button>
+                {person.can_call && <a className="button button--secondary" href={`tel:${person.phone_number}`}><Phone size={17} />Call</a>}
+                {person.can_whatsapp && <a className="button button--secondary" href={person.whatsapp_url} target="_blank" rel="noreferrer"><MessageCircle size={17} />WhatsApp</a>}
+              </div>
             </article>
           )) : <WorkspaceEmpty icon={Clock3} title="No approved practitioner is online" text="Refresh later or use emergency services if the situation cannot wait." />}
         </div>
@@ -109,6 +114,7 @@ export function PractitionerDashboardPage({ pendingOnly = false }) {
   const auth = useAuth();
   const [state, setState] = useState({ loading: true, error: '', sessions: [], profile: null, notifications: [] });
   const [savingStatus, setSavingStatus] = useState('');
+  const [savingContact, setSavingContact] = useState(false);
   const [busySession, setBusySession] = useState(null);
 
   const load = useCallback(async () => {
@@ -148,6 +154,18 @@ export function PractitionerDashboardPage({ pendingOnly = false }) {
     }
   }
 
+  async function saveContact(phoneNumber) {
+    setSavingContact(true);
+    try {
+      const profile = await updatePractitionerContact(auth.accessToken, { phoneNumber });
+      setState((current) => ({ ...current, profile, error: '' }));
+    } catch (error) {
+      setState((current) => ({ ...current, error: error.message }));
+    } finally {
+      setSavingContact(false);
+    }
+  }
+
   async function decide(sessionId, action) {
     setBusySession(sessionId);
     try {
@@ -169,7 +187,7 @@ export function PractitionerDashboardPage({ pendingOnly = false }) {
     <Layout active="app">
       <SupportWorkspaceShell eyebrow="Practitioner workspace" title={pendingOnly ? 'Pending support requests' : `Welcome, ${auth.user?.name || 'Practitioner'}.`} subtitle="Manage your presence, accept assigned requests, and continue private patient sessions.">
         <EmergencyDisclaimer />
-        {!pendingOnly && <PractitionerPresence profile={state.profile} saving={savingStatus} onChange={setStatus} />}
+        {!pendingOnly && <><PractitionerPresence profile={state.profile} saving={savingStatus} onChange={setStatus} /><PractitionerContactSettings profile={state.profile} saving={savingContact} onSave={saveContact} /></>}
         <nav className="support-workspace-tabs" aria-label="Practitioner support views">
           <Link className={!pendingOnly ? 'is-active' : ''} to="/practitioner/dashboard">Dashboard</Link>
           <Link className={pendingOnly ? 'is-active' : ''} to="/practitioner/pending-requests">Pending requests <span>{pendingCount}</span></Link>
@@ -269,9 +287,11 @@ export function SupportChatPage({ practitionerRoute = false }) {
                 <button className="button button--primary" type="button" disabled={Boolean(busy)} onClick={() => sessionAction('accept')}><Check size={17} />Accept</button>
                 <button className="button button--secondary" type="button" disabled={Boolean(busy)} onClick={() => sessionAction('reject')}><X size={17} />Reject</button>
               </>}
+              {!practitionerRoute && session.status === 'accepted' && session.practitioner?.can_call && <a className="button button--secondary" href={`tel:${session.practitioner.phone_number}`}><Phone size={17} />Call practitioner</a>}
+              {!practitionerRoute && session.status === 'accepted' && session.practitioner?.can_whatsapp && <a className="button button--secondary" href={session.practitioner.whatsapp_url} target="_blank" rel="noreferrer"><MessageCircle size={17} />Open WhatsApp</a>}
               {session.can_call && <>
-                <button className="button button--secondary" type="button" disabled={Boolean(busy || ringingCall || activeCall)} onClick={() => callAction('audio')}><Phone size={17} />Start audio call</button>
-                <button className="button button--secondary" type="button" disabled={Boolean(busy || ringingCall || activeCall)} onClick={() => callAction('video')}><Video size={17} />Start video call</button>
+                <button className="button button--secondary" type="button" disabled={Boolean(busy || ringingCall || activeCall)} onClick={() => callAction('audio')}><Phone size={17} />MindRise audio request</button>
+                <button className="button button--secondary" type="button" disabled={Boolean(busy || ringingCall || activeCall)} onClick={() => callAction('video')}><Video size={17} />MindRise video request</button>
               </>}
             </div>
             {(ringingCall || activeCall) && <CallBanner call={activeCall || ringingCall} currentUserId={auth.user?.id} busy={busy} onAction={callAction} />}
@@ -304,6 +324,16 @@ function WorkspaceToolbar({ label, loading, onRefresh }) {
 function PractitionerPresence({ profile, saving, onChange }) {
   const status = profile?.availability_status || 'offline';
   return <section className="practitioner-presence-panel"><div><p className="eyebrow">Current status</p><h2>{formatStatus(status)}</h2><p>Patients can request support only while you are online.</p></div><div className="practitioner-presence-actions">{[['online', Wifi], ['busy', Headphones], ['offline', WifiOff]].map(([value, Icon]) => <button className={status === value ? 'is-active' : ''} type="button" key={value} disabled={Boolean(saving)} onClick={() => onChange(value)}>{saving === value ? <Loader2 className="spin" size={17} /> : <Icon size={17} />}<span>{formatStatus(value)}</span></button>)}</div></section>;
+}
+
+function PractitionerContactSettings({ profile, saving, onSave }) {
+  const [phoneNumber, setPhoneNumber] = useState(profile?.phone_number || '');
+  useEffect(() => { setPhoneNumber(profile?.phone_number || ''); }, [profile?.phone_number]);
+  return <form className="practitioner-contact-panel" onSubmit={(event) => { event.preventDefault(); void onSave(phoneNumber.trim()); }}>
+    <div><p className="eyebrow">Call & WhatsApp</p><h2>Practitioner telephone number</h2><p>Use an international number, including country code. Patients use this same number for phone calls and WhatsApp.</p></div>
+    <label><span>Telephone number</span><input type="tel" value={phoneNumber} onChange={(event) => setPhoneNumber(event.target.value)} placeholder="+250 788 123 456" autoComplete="tel" /></label>
+    <button className="button button--primary" type="submit" disabled={saving}>{saving ? <Loader2 className="spin" size={17} /> : <Check size={17} />}Save number</button>
+  </form>;
 }
 
 function NotificationStrip({ notifications }) {

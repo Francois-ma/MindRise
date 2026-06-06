@@ -258,6 +258,16 @@ export async function updatePractitionerAvailability(token, payload) {
   });
 }
 
+export async function updatePractitionerContact(token, payload) {
+  return request('/support/practitioners/me/contact/', {
+    token,
+    method: 'PATCH',
+    body: JSON.stringify({
+      phone_number: payload.phoneNumber || '',
+    }),
+  });
+}
+
 export async function fetchPendingPractitioners(token) {
   return request('/admin/practitioners/pending/?limit=50', { token });
 }
