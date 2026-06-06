@@ -23,6 +23,7 @@ class PractitionerProfileSerializer(serializers.ModelSerializer):
     can_whatsapp = serializers.SerializerMethodField()
     whatsapp_url = serializers.SerializerMethodField()
     is_my_profile = serializers.SerializerMethodField()
+    profile_picture_url = serializers.SerializerMethodField()
 
     class Meta:
         model = PractitionerProfile
@@ -31,6 +32,7 @@ class PractitionerProfileSerializer(serializers.ModelSerializer):
             "display_name",
             "specialization",
             "bio",
+            "profile_picture_url",
             "availability_status",
             "is_available",
             "next_available_at",
@@ -42,6 +44,14 @@ class PractitionerProfileSerializer(serializers.ModelSerializer):
             "whatsapp_url",
             "is_my_profile",
         )
+
+    def get_profile_picture_url(self, obj) -> str:
+        if not obj.user.profile_picture:
+            return ""
+        request = self.context.get("request")
+        if request:
+            return request.build_absolute_uri(obj.user.profile_picture.url)
+        return obj.user.profile_picture.url
 
     def get_phone_number(self, obj) -> str:
         return obj.contact_phone or obj.user.phone_number
@@ -77,6 +87,24 @@ class PractitionerContactSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Include the country code, starting with +.")
         if value and not 8 <= len(digits) <= 15:
             raise serializers.ValidationError("Enter a valid international telephone number.")
+        return value.strip()
+
+
+class PractitionerProfileUpdateSerializer(PractitionerContactSerializer):
+    class Meta:
+        model = PractitionerProfile
+        fields = ("display_name", "specialization", "bio", "phone_number", "video_call_url")
+
+    def validate_display_name(self, value):
+        value = value.strip()
+        if not value:
+            raise serializers.ValidationError("Display name is required.")
+        return value
+
+    def validate_specialization(self, value):
+        return value.strip()
+
+    def validate_bio(self, value):
         return value.strip()
 
 

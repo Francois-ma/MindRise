@@ -16,7 +16,16 @@ class UserAdmin(DjangoUserAdmin):
         (None, {"fields": ("email", "password")}),
         (
             "Personal info",
-            {"fields": ("first_name", "last_name", "phone_number", "date_of_birth", "timezone")},
+            {
+                "fields": (
+                    "first_name",
+                    "last_name",
+                    "phone_number",
+                    "profile_picture",
+                    "date_of_birth",
+                    "timezone",
+                )
+            },
         ),
         ("Security", {"fields": ("role", "is_email_verified", "is_approved", "accepted_terms_at")}),
         ("Permissions", {"fields": ("is_active", "is_staff", "is_superuser", "groups", "user_permissions")}),

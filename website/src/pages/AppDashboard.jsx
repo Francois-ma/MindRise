@@ -4,6 +4,7 @@ import {
   Activity,
   BarChart3,
   BookOpen,
+  Camera,
   CheckCircle2,
   HeartPulse,
   Home,
@@ -32,6 +33,8 @@ import {
   fetchPersonalizedInsights,
   fetchPractitioners,
   readListPayload,
+  updateCurrentUser,
+  updatePractitionerProfile,
 } from '../api';
 import { useAuth } from '../auth';
 import { Layout } from '../components/Layout';
@@ -177,6 +180,7 @@ export function AppDashboard() {
                 setTab={setActiveTab}
                 onRefresh={loadDashboard}
                 isAdminUser={isAdminUser}
+                onUserUpdated={auth.updateUser}
               />
             )}
           </section>
@@ -186,7 +190,7 @@ export function AppDashboard() {
   );
 }
 
-function ActivePanel({ tab, user, token, data, setTab, onRefresh, isAdminUser }) {
+function ActivePanel({ tab, user, token, data, setTab, onRefresh, isAdminUser, onUserUpdated }) {
   if (tab === 'practitioner-home') return <PractitionerWorkspacePanel token={token} user={user} practitioners={data.practitioners} setTab={setTab} />;
   if (tab === 'practitioner-inbox') return <PractitionerInboxPanel token={token} user={user} />;
   if (tab === 'admin-practitioners') return isAdminUser ? <PendingPractitionersPanel token={token} /> : <HomePanel user={user} data={data} setTab={setTab} />;
@@ -195,7 +199,7 @@ function ActivePanel({ tab, user, token, data, setTab, onRefresh, isAdminUser })
   if (tab === 'reset') return <ResetPanel token={token} />;
   if (tab === 'learn') return <LearnPanel learning={data.learning} />;
   if (tab === 'support') return <SupportPanel token={token} user={user} practitioners={data.practitioners} crisis={data.crisis} />;
-  if (tab === 'profile') return <ProfilePanel user={user} summary={data.summary} />;
+  if (tab === 'profile') return <ProfilePanel user={user} token={token} summary={data.summary} practitioners={data.practitioners} onUserUpdated={onUserUpdated} onRefresh={onRefresh} />;
   return <HomePanel user={user} data={data} setTab={setTab} />;
 }
 
@@ -563,37 +567,80 @@ function PendingPractitionersPanel({ token }) {
   );
 }
 
-function ProfilePanel({ user, summary }) {
+function ProfilePanel({ user, token, summary, practitioners, onUserUpdated, onRefresh }) {
   const isPractitioner = user?.role === 'practitioner';
+  const professional = practitioners.find((person) => person.is_my_profile) || null;
+  const [personal, setPersonal] = useState({ firstName: user?.first_name || '', lastName: user?.last_name || '', phoneNumber: user?.phone_number || '', dateOfBirth: user?.date_of_birth || '', timezone: user?.timezone || 'Africa/Kigali' });
+  const [practitioner, setPractitioner] = useState({ displayName: professional?.display_name || user?.name || '', specialization: professional?.specialization || '', bio: professional?.bio || '', phoneNumber: professional?.phone_number || '', videoCallUrl: professional?.video_call_url || '' });
+  const [picture, setPicture] = useState(null);
+  const [removePicture, setRemovePicture] = useState(false);
+  const [status, setStatus] = useState({ saving: '', type: '', message: '' });
+
+  useEffect(() => setPersonal({ firstName: user?.first_name || '', lastName: user?.last_name || '', phoneNumber: user?.phone_number || '', dateOfBirth: user?.date_of_birth || '', timezone: user?.timezone || 'Africa/Kigali' }), [user]);
+  useEffect(() => setPractitioner({ displayName: professional?.display_name || user?.name || '', specialization: professional?.specialization || '', bio: professional?.bio || '', phoneNumber: professional?.phone_number || '', videoCallUrl: professional?.video_call_url || '' }), [professional, user?.name]);
+  const previewUrl = useMemo(() => picture ? URL.createObjectURL(picture) : removePicture ? '' : user?.profile_picture_url || '', [picture, removePicture, user?.profile_picture_url]);
+  useEffect(() => () => { if (picture && previewUrl) URL.revokeObjectURL(previewUrl); }, [picture, previewUrl]);
+
+  async function savePersonal(event) {
+    event.preventDefault();
+    setStatus({ saving: 'personal', type: '', message: '' });
+    try {
+      const updated = await updateCurrentUser(token, { ...personal, profilePicture: picture, removeProfilePicture: removePicture });
+      onUserUpdated(updated);
+      setPicture(null);
+      setRemovePicture(false);
+      setStatus({ saving: '', type: 'success', message: 'Your profile was updated.' });
+      void onRefresh();
+    } catch (error) {
+      setStatus({ saving: '', type: 'error', message: error.message });
+    }
+  }
+
+  async function saveProfessional(event) {
+    event.preventDefault();
+    setStatus({ saving: 'professional', type: '', message: '' });
+    try {
+      await updatePractitionerProfile(token, practitioner);
+      setStatus({ saving: '', type: 'success', message: 'Your professional profile was updated.' });
+      void onRefresh();
+    } catch (error) {
+      setStatus({ saving: '', type: 'error', message: error.message });
+    }
+  }
+
   return (
     <div className="web-app-stack">
-      <PanelHeading eyebrow="Profile" title={isPractitioner ? 'Your practitioner account.' : 'Your MindRise account.'} text={isPractitioner ? 'Review your professional access and verified MindRise account status.' : 'This account opens private wellness features on web and can be used for the mobile app too.'} />
-      <div className="web-profile-grid">
-        <div className="web-app-card">
-          <h3>Account</h3>
-          <dl className="web-profile-list">
-            <div><dt>Name</dt><dd>{user?.name || user?.first_name || 'MindRise member'}</dd></div>
-            <div><dt>Email</dt><dd>{user?.email}</dd></div>
-            <div><dt>Role</dt><dd>{formatRole(user?.role)}</dd></div>
-            <div><dt>Status</dt><dd>{user?.is_email_verified ? 'Verified' : 'Verification required'}</dd></div>
-            <div><dt>Approval</dt><dd>{isPractitioner ? (user?.is_approved ? 'Approved' : 'Pending') : 'Not required'}</dd></div>
-          </dl>
-        </div>
-        {isPractitioner ? (
-          <div className="web-app-card practitioner-profile-guidance">
-            <ShieldCheck size={24} aria-hidden="true" />
-            <h3>Professional access</h3>
-            <p>Your practitioner workspace is reserved for approved accounts. Keep patient conversations private and mark yourself online only while ready to respond.</p>
-          </div>
-        ) : (
-          <div className="web-app-card">
-            <h3>Wellness record</h3>
-            <MetricGrid summary={summary} compact />
-          </div>
-        )}
+      <PanelHeading eyebrow="Profile" title={isPractitioner ? 'Your practitioner profile.' : 'Your MindRise profile.'} text="Keep your identity and contact details accurate across MindRise web and mobile." />
+      {status.message && <p className={`form-status form-status--${status.type}`}>{status.message}</p>}
+      <section className="web-profile-identity">
+        <ProfileAvatar src={previewUrl} name={user?.name} />
+        <div><h3>{user?.name || 'MindRise member'}</h3><p>{user?.email}</p><span>{formatRole(user?.role)} - {user?.is_email_verified ? 'Verified' : 'Verification required'}</span></div>
+        <label className="button button--secondary web-profile-photo-button"><Camera size={17} aria-hidden="true" /><span>{user?.profile_picture_url ? 'Replace photo' : 'Add photo'}</span><input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={(event) => { setPicture(event.target.files?.[0] || null); setRemovePicture(false); }} /></label>
+        {(user?.profile_picture_url || picture) && <button className="button button--secondary" type="button" onClick={() => { setPicture(null); setRemovePicture(true); }}>Remove photo</button>}
+      </section>
+      <div className="web-profile-editor-grid">
+        <form className="web-app-card web-form" onSubmit={savePersonal}>
+          <div><p className="eyebrow">Account details</p><h3>Personal profile</h3></div>
+          <div className="web-form-split"><label><span>First name</span><input required value={personal.firstName} onChange={(event) => setPersonal((current) => ({ ...current, firstName: event.target.value }))} /></label><label><span>Last name</span><input value={personal.lastName} onChange={(event) => setPersonal((current) => ({ ...current, lastName: event.target.value }))} /></label></div>
+          <label><span>Phone number</span><input type="tel" value={personal.phoneNumber} onChange={(event) => setPersonal((current) => ({ ...current, phoneNumber: event.target.value }))} placeholder="+250 788 123 456" /></label>
+          <div className="web-form-split"><label><span>Date of birth</span><input type="date" value={personal.dateOfBirth || ''} onChange={(event) => setPersonal((current) => ({ ...current, dateOfBirth: event.target.value }))} /></label><label><span>Timezone</span><input value={personal.timezone} onChange={(event) => setPersonal((current) => ({ ...current, timezone: event.target.value }))} /></label></div>
+          <button className="button button--primary" type="submit" disabled={Boolean(status.saving)}>{status.saving === 'personal' ? <Loader2 className="spin" size={17} /> : <CheckCircle2 size={17} />}Save personal profile</button>
+        </form>
+        {isPractitioner ? <form className="web-app-card web-form" onSubmit={saveProfessional}>
+          <div><p className="eyebrow">Patient-facing details</p><h3>Professional profile</h3></div>
+          <label><span>Display name</span><input required value={practitioner.displayName} onChange={(event) => setPractitioner((current) => ({ ...current, displayName: event.target.value }))} /></label>
+          <label><span>Specialization</span><input value={practitioner.specialization} onChange={(event) => setPractitioner((current) => ({ ...current, specialization: event.target.value }))} placeholder="Trauma-informed care" /></label>
+          <label><span>Professional bio</span><textarea rows={5} maxLength={1200} value={practitioner.bio} onChange={(event) => setPractitioner((current) => ({ ...current, bio: event.target.value }))} /></label>
+          <label><span>Call and WhatsApp number</span><input type="tel" value={practitioner.phoneNumber} onChange={(event) => setPractitioner((current) => ({ ...current, phoneNumber: event.target.value }))} placeholder="+250 788 123 456" /></label>
+          <button className="button button--primary" type="submit" disabled={Boolean(status.saving)}>{status.saving === 'professional' ? <Loader2 className="spin" size={17} /> : <ShieldCheck size={17} />}Save professional profile</button>
+        </form> : <div className="web-app-card"><h3>Wellness record</h3><MetricGrid summary={summary} compact /></div>}
       </div>
     </div>
   );
+}
+
+function ProfileAvatar({ src, name, className = '' }) {
+  return <span className={`profile-avatar ${className}`}>{src ? <img src={src} alt="" /> : <UserRound size={24} aria-hidden="true" />}<span className="sr-only">{name || 'MindRise member'}</span></span>;
 }
 
 function MetricGrid({ summary, compact = false }) {

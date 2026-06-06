@@ -193,7 +193,10 @@ class AuthController extends Notifier<AuthState> {
     required String firstName,
     required String lastName,
     required String phoneNumber,
+    required String dateOfBirth,
     required String timezone,
+    String? profilePicturePath,
+    bool removeProfilePicture = false,
   }) async {
     final previous = state;
     state = previous.copyWith(clearErrorMessage: true);
@@ -202,7 +205,10 @@ class AuthController extends Notifier<AuthState> {
         firstName: firstName,
         lastName: lastName,
         phoneNumber: phoneNumber,
+        dateOfBirth: dateOfBirth,
         timezone: timezone,
+        profilePicturePath: profilePicturePath,
+        removeProfilePicture: removeProfilePicture,
       );
       state = AuthState(status: AuthStatus.authenticated, user: user);
       return true;

@@ -563,13 +563,18 @@ class _PractitionerCard extends StatelessWidget {
               CircleAvatar(
                 radius: 25,
                 backgroundColor: AppColors.emerald,
-                child: Text(
-                  _initials(practitioner.displayName),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
+                backgroundImage: practitioner.profilePictureUrl.isNotEmpty
+                    ? NetworkImage(practitioner.profilePictureUrl)
+                    : null,
+                child: practitioner.profilePictureUrl.isEmpty
+                    ? Text(
+                        _initials(practitioner.displayName),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      )
+                    : null,
               ),
               const SizedBox(width: 13),
               Expanded(

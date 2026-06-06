@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -11,6 +14,7 @@ import '../../../core/widgets/screen_state.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../auth/presentation/auth_controller.dart';
 import '../../mood/data/mood_repository.dart';
+import '../../support/data/support_repository.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -21,6 +25,9 @@ class ProfileScreen extends ConsumerWidget {
     final user = auth.user;
     final isPractitioner = user?.role == AppUserRole.practitioner;
     final summary = ref.watch(moodSummaryProvider);
+    final practitioners = isPractitioner
+        ? ref.watch(practitionersProvider)
+        : null;
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -45,9 +52,35 @@ class ProfileScreen extends ConsumerWidget {
                   const SizedBox(height: AppSpacing.xl),
                   _AccountStatusCard(user: user),
                   const SizedBox(height: AppSpacing.xl),
-                  if (isPractitioner)
-                    _PractitionerAccessCard(user: user)
-                  else
+                  if (isPractitioner) ...[
+                    _PractitionerAccessCard(user: user),
+                    const SizedBox(height: AppSpacing.xl),
+                    practitioners!.when(
+                      data: (items) {
+                        Practitioner? profile;
+                        for (final item in items) {
+                          if (item.isMyProfile) profile = item;
+                        }
+                        return _ProfessionalProfileCard(
+                          profile: profile,
+                          onEdit: profile == null
+                              ? null
+                              : () => _showEditProfessionalProfileDialog(
+                                  context,
+                                  ref,
+                                  profile!,
+                                ),
+                        );
+                      },
+                      loading: () => const InlineLoadingCard(
+                        message: 'Loading professional profile...',
+                      ),
+                      error: (error, stackTrace) => InlineErrorCard(
+                        error: error,
+                        onRetry: () => ref.invalidate(practitionersProvider),
+                      ),
+                    ),
+                  ] else
                     summary.when(
                       data: (data) => _WellnessStats(summary: data),
                       loading: () => const InlineLoadingCard(
@@ -169,8 +202,11 @@ Future<void> _showEditProfileDialog(BuildContext context, AppUser user) async {
   final firstNameController = TextEditingController(text: user.firstName);
   final lastNameController = TextEditingController(text: user.lastName);
   final phoneController = TextEditingController(text: user.phoneNumber);
+  final dateOfBirthController = TextEditingController(text: user.dateOfBirth);
   final timezoneController = TextEditingController(text: user.timezone);
   final formKey = GlobalKey<FormState>();
+  XFile? selectedPicture;
+  var removeProfilePicture = false;
 
   await showDialog<void>(
     context: context,
@@ -189,7 +225,10 @@ Future<void> _showEditProfileDialog(BuildContext context, AppUser user) async {
                       firstName: firstNameController.text,
                       lastName: lastNameController.text,
                       phoneNumber: phoneController.text,
+                      dateOfBirth: dateOfBirthController.text,
                       timezone: timezoneController.text,
+                      profilePicturePath: selectedPicture?.path,
+                      removeProfilePicture: removeProfilePicture,
                     );
                 if (!context.mounted) return;
                 setState(() => isSaving = false);
@@ -216,6 +255,75 @@ Future<void> _showEditProfileDialog(BuildContext context, AppUser user) async {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
+                        Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 32,
+                              backgroundColor: AppColors.emerald.withValues(
+                                alpha: .12,
+                              ),
+                              backgroundImage: selectedPicture != null
+                                  ? FileImage(File(selectedPicture!.path))
+                                  : !removeProfilePicture &&
+                                        user.profilePictureUrl.isNotEmpty
+                                  ? NetworkImage(user.profilePictureUrl)
+                                  : null,
+                              child:
+                                  selectedPicture == null &&
+                                      (removeProfilePicture ||
+                                          user.profilePictureUrl.isEmpty)
+                                  ? const Icon(
+                                      Icons.person_rounded,
+                                      color: AppColors.emerald,
+                                    )
+                                  : null,
+                            ),
+                            const SizedBox(width: AppSpacing.md),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  OutlinedButton.icon(
+                                    onPressed: isSaving
+                                        ? null
+                                        : () async {
+                                            final picture = await ImagePicker()
+                                                .pickImage(
+                                                  source: ImageSource.gallery,
+                                                  maxWidth: 1200,
+                                                  imageQuality: 88,
+                                                );
+                                            if (picture != null) {
+                                              setState(() {
+                                                selectedPicture = picture;
+                                                removeProfilePicture = false;
+                                              });
+                                            }
+                                          },
+                                    icon: const Icon(Icons.add_a_photo_rounded),
+                                    label: Text(
+                                      user.profilePictureUrl.isEmpty
+                                          ? 'Add photo'
+                                          : 'Replace photo',
+                                    ),
+                                  ),
+                                  if (user.profilePictureUrl.isNotEmpty ||
+                                      selectedPicture != null)
+                                    TextButton(
+                                      onPressed: isSaving
+                                          ? null
+                                          : () => setState(() {
+                                              selectedPicture = null;
+                                              removeProfilePicture = true;
+                                            }),
+                                      child: const Text('Remove photo'),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: AppSpacing.md),
                         TextFormField(
                           controller: firstNameController,
                           decoration: const InputDecoration(
@@ -242,6 +350,16 @@ Future<void> _showEditProfileDialog(BuildContext context, AppUser user) async {
                           decoration: const InputDecoration(
                             labelText: 'Phone number',
                             prefixIcon: Icon(Icons.phone_rounded),
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        TextFormField(
+                          controller: dateOfBirthController,
+                          keyboardType: TextInputType.datetime,
+                          decoration: const InputDecoration(
+                            labelText: 'Date of birth',
+                            hintText: 'YYYY-MM-DD',
+                            prefixIcon: Icon(Icons.cake_rounded),
                           ),
                         ),
                         const SizedBox(height: AppSpacing.md),
@@ -285,7 +403,142 @@ Future<void> _showEditProfileDialog(BuildContext context, AppUser user) async {
   firstNameController.dispose();
   lastNameController.dispose();
   phoneController.dispose();
+  dateOfBirthController.dispose();
   timezoneController.dispose();
+}
+
+Future<void> _showEditProfessionalProfileDialog(
+  BuildContext context,
+  WidgetRef ref,
+  Practitioner profile,
+) async {
+  final displayNameController = TextEditingController(
+    text: profile.displayName,
+  );
+  final specializationController = TextEditingController(
+    text: profile.specialization,
+  );
+  final bioController = TextEditingController(text: profile.bio);
+  final phoneController = TextEditingController(text: profile.phoneNumber);
+  final formKey = GlobalKey<FormState>();
+
+  await showDialog<void>(
+    context: context,
+    builder: (dialogContext) {
+      var isSaving = false;
+      return StatefulBuilder(
+        builder: (context, setState) {
+          Future<void> save() async {
+            if (!formKey.currentState!.validate() || isSaving) return;
+            setState(() => isSaving = true);
+            try {
+              await ref
+                  .read(supportRepositoryProvider)
+                  .updateProfessionalProfile(
+                    displayName: displayNameController.text,
+                    specialization: specializationController.text,
+                    bio: bioController.text,
+                    phoneNumber: phoneController.text,
+                  );
+              ref.invalidate(practitionersProvider);
+              if (dialogContext.mounted) {
+                Navigator.of(dialogContext).pop();
+              }
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Professional profile updated.'),
+                  ),
+                );
+              }
+            } on Object catch (error) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text(error.toString())));
+              }
+              setState(() => isSaving = false);
+            }
+          }
+
+          return AlertDialog(
+            title: const Text('Edit professional profile'),
+            content: Form(
+              key: formKey,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      controller: displayNameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Display name',
+                        prefixIcon: Icon(Icons.badge_rounded),
+                      ),
+                      validator: (value) =>
+                          value == null || value.trim().isEmpty
+                          ? 'Display name is required'
+                          : null,
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    TextFormField(
+                      controller: specializationController,
+                      decoration: const InputDecoration(
+                        labelText: 'Specialization',
+                        prefixIcon: Icon(Icons.psychology_rounded),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    TextFormField(
+                      controller: bioController,
+                      maxLength: 1200,
+                      maxLines: 4,
+                      decoration: const InputDecoration(
+                        labelText: 'Professional bio',
+                        prefixIcon: Icon(Icons.notes_rounded),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    TextFormField(
+                      controller: phoneController,
+                      keyboardType: TextInputType.phone,
+                      decoration: const InputDecoration(
+                        labelText: 'Call and WhatsApp number',
+                        prefixIcon: Icon(Icons.phone_rounded),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: isSaving
+                    ? null
+                    : () => Navigator.of(dialogContext).pop(),
+                child: const Text('Cancel'),
+              ),
+              FilledButton.icon(
+                onPressed: isSaving ? null : save,
+                icon: isSaving
+                    ? const SizedBox.square(
+                        dimension: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.save_rounded),
+                label: const Text('Save'),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+
+  displayNameController.dispose();
+  specializationController.dispose();
+  bioController.dispose();
+  phoneController.dispose();
 }
 
 Future<void> _showPasswordDialog(BuildContext context) async {
@@ -437,12 +690,17 @@ class _AccountStatusCard extends StatelessWidget {
             backgroundColor: verified
                 ? AppColors.emerald
                 : theme.colorScheme.errorContainer,
-            child: Icon(
-              verified ? Icons.lock_rounded : Icons.lock_open_rounded,
-              color: verified
-                  ? Colors.white
-                  : theme.colorScheme.onErrorContainer,
-            ),
+            backgroundImage: user?.profilePictureUrl.isNotEmpty == true
+                ? NetworkImage(user!.profilePictureUrl)
+                : null,
+            child: user?.profilePictureUrl.isNotEmpty == true
+                ? null
+                : Icon(
+                    verified ? Icons.lock_rounded : Icons.lock_open_rounded,
+                    color: verified
+                        ? Colors.white
+                        : theme.colorScheme.onErrorContainer,
+                  ),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -559,6 +817,73 @@ class _PractitionerAccessCard extends StatelessWidget {
                 ? 'Your practitioner account is approved. Use the practitioner workspace to manage availability and patient conversations.'
                 : 'Your practitioner account is waiting for approval.',
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProfessionalProfileCard extends StatelessWidget {
+  const _ProfessionalProfileCard({required this.profile, required this.onEdit});
+  final Practitioner? profile;
+  final VoidCallback? onEdit;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return MRCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 25,
+                backgroundColor: AppColors.emerald.withValues(alpha: .14),
+                backgroundImage: profile?.profilePictureUrl.isNotEmpty == true
+                    ? NetworkImage(profile!.profilePictureUrl)
+                    : null,
+                child: profile?.profilePictureUrl.isNotEmpty == true
+                    ? null
+                    : const Icon(
+                        Icons.psychology_rounded,
+                        color: AppColors.emerald,
+                      ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      profile?.displayName ?? 'Professional profile',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    Text(
+                      profile?.specialization.isNotEmpty == true
+                          ? profile!.specialization
+                          : 'Add your specialization',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: AppColors.teal,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton.filledTonal(
+                onPressed: onEdit,
+                tooltip: 'Edit professional profile',
+                icon: const Icon(Icons.edit_rounded),
+              ),
+            ],
+          ),
+          if (profile?.bio.isNotEmpty == true) ...[
+            const SizedBox(height: AppSpacing.md),
+            Text(profile!.bio),
+          ],
         ],
       ),
     );

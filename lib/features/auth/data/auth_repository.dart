@@ -38,6 +38,8 @@ class AppUser {
     required this.firstName,
     required this.lastName,
     required this.phoneNumber,
+    required this.dateOfBirth,
+    required this.profilePictureUrl,
     required this.timezone,
   });
 
@@ -50,6 +52,8 @@ class AppUser {
   final String firstName;
   final String lastName;
   final String phoneNumber;
+  final String dateOfBirth;
+  final String profilePictureUrl;
   final String timezone;
 
   factory AppUser.fromJson(Map<String, dynamic> json) {
@@ -76,6 +80,8 @@ class AppUser {
       firstName: firstName,
       lastName: lastName,
       phoneNumber: json['phone_number']?.toString().trim() ?? '',
+      dateOfBirth: json['date_of_birth']?.toString().trim() ?? '',
+      profilePictureUrl: json['profile_picture_url']?.toString().trim() ?? '',
       timezone: json['timezone']?.toString().trim() ?? 'UTC',
     );
   }
@@ -171,16 +177,25 @@ class AuthRepository {
     required String firstName,
     required String lastName,
     required String phoneNumber,
+    required String dateOfBirth,
     required String timezone,
+    String? profilePicturePath,
+    bool removeProfilePicture = false,
   }) async {
+    final formData = FormData.fromMap({
+      'first_name': firstName.trim(),
+      'last_name': lastName.trim(),
+      'phone_number': phoneNumber.trim(),
+      'date_of_birth': dateOfBirth.trim(),
+      'timezone': timezone.trim().isEmpty ? 'UTC' : timezone.trim(),
+      if (profilePicturePath != null)
+        'profile_picture': await MultipartFile.fromFile(profilePicturePath),
+      if (removeProfilePicture) 'remove_profile_picture': true,
+    });
     final response = await _dio.patch<Map<String, dynamic>>(
       '/auth/me/',
-      data: {
-        'first_name': firstName.trim(),
-        'last_name': lastName.trim(),
-        'phone_number': phoneNumber.trim(),
-        'timezone': timezone.trim().isEmpty ? 'UTC' : timezone.trim(),
-      },
+      data: formData,
+      options: Options(contentType: 'multipart/form-data'),
     );
     return AppUser.fromJson(response.data ?? const {});
   }

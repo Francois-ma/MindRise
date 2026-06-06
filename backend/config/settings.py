@@ -130,11 +130,61 @@ MEDIA_ROOT = Path(config("DJANGO_MEDIA_ROOT", default=str(BASE_DIR / "media")))
 if not MEDIA_ROOT.is_absolute():
     MEDIA_ROOT = BASE_DIR / MEDIA_ROOT
 SERVE_MEDIA_FILES = config("SERVE_MEDIA_FILES", default=DEBUG, cast=bool)
-PUBLIC_MEDIA_PREFIXES = tuple(config("PUBLIC_MEDIA_PREFIXES", default="learning/materials", cast=Csv()))
+PUBLIC_MEDIA_PREFIXES = tuple(
+    dict.fromkeys(
+        (
+            *config("PUBLIC_MEDIA_PREFIXES", default="learning/materials", cast=Csv()),
+            "accounts/profile-pictures",
+        )
+    )
+)
+SUPABASE_STORAGE_ENABLED = config("SUPABASE_STORAGE_ENABLED", default=False, cast=bool)
+SUPABASE_URL = config("SUPABASE_URL", default="").rstrip("/")
+SUPABASE_STORAGE_BUCKET = config("SUPABASE_STORAGE_BUCKET", default="mindrise-profile-images")
+SUPABASE_STORAGE_PUBLIC_URL = config(
+    "SUPABASE_STORAGE_PUBLIC_URL",
+    default=(f"{SUPABASE_URL}/storage/v1/object/public/{SUPABASE_STORAGE_BUCKET}" if SUPABASE_URL else ""),
+).rstrip("/")
+
 STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "profile_pictures": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
     "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
 }
+if SUPABASE_STORAGE_ENABLED:
+    required_supabase_storage_settings = {
+        "SUPABASE_URL": SUPABASE_URL,
+        "SUPABASE_S3_ACCESS_KEY_ID": config("SUPABASE_S3_ACCESS_KEY_ID", default=""),
+        "SUPABASE_S3_SECRET_ACCESS_KEY": config("SUPABASE_S3_SECRET_ACCESS_KEY", default=""),
+        "SUPABASE_S3_REGION": config("SUPABASE_S3_REGION", default=""),
+        "SUPABASE_STORAGE_PUBLIC_URL": SUPABASE_STORAGE_PUBLIC_URL,
+    }
+    missing_supabase_storage_settings = [
+        key for key, value in required_supabase_storage_settings.items() if not value
+    ]
+    if missing_supabase_storage_settings:
+        raise RuntimeError(
+            "Supabase Storage is enabled but these settings are missing: "
+            + ", ".join(missing_supabase_storage_settings)
+        )
+
+    STORAGES["profile_pictures"] = {
+        "BACKEND": "storages.backends.s3.S3Storage",
+        "OPTIONS": {
+            "access_key": required_supabase_storage_settings["SUPABASE_S3_ACCESS_KEY_ID"],
+            "secret_key": required_supabase_storage_settings["SUPABASE_S3_SECRET_ACCESS_KEY"],
+            "bucket_name": SUPABASE_STORAGE_BUCKET,
+            "endpoint_url": f"{SUPABASE_URL}/storage/v1/s3",
+            "region_name": required_supabase_storage_settings["SUPABASE_S3_REGION"],
+            "signature_version": "s3v4",
+            "addressing_style": "path",
+            "default_acl": None,
+            "querystring_auth": False,
+            "file_overwrite": False,
+            "custom_domain": SUPABASE_STORAGE_PUBLIC_URL.removeprefix("https://").removeprefix("http://"),
+            "url_protocol": "https:",
+        },
+    }
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 CORS_ALLOWED_ORIGINS = config("CORS_ALLOWED_ORIGINS", default="", cast=Csv())

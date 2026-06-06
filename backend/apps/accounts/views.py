@@ -131,6 +131,14 @@ class MeView(generics.RetrieveUpdateAPIView):
     def get_object(self):
         return self.request.user
 
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop("partial", False)
+        user = self.get_object()
+        serializer = self.get_serializer(user, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(UserSerializer(user, context=self.get_serializer_context()).data)
+
 
 class PasswordChangeView(generics.GenericAPIView):
     serializer_class = PasswordChangeSerializer

@@ -1,5 +1,6 @@
 import pytest
 from django.contrib.auth import get_user_model
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 from rest_framework.test import APIClient
 
@@ -359,3 +360,68 @@ def test_email_verification_code_locks_after_repeated_failures(monkeypatch, sett
     assert user.is_email_verified is False
     assert challenge.failed_attempts == max_attempts
     assert challenge.used_at is not None
+
+@pytest.mark.django_db
+def test_patient_can_edit_profile_and_upload_picture(settings, tmp_path):
+    settings.MEDIA_ROOT = tmp_path
+    user = get_user_model().objects.create_user(
+        email="profile-patient@example.com",
+        password="MindRiseStrong123!",
+        first_name="Old",
+    )
+    client = APIClient()
+    client.force_authenticate(user=user)
+    picture = SimpleUploadedFile(
+        "profile.gif",
+        b"GIF89a\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\xff\xff\xff!\xf9\x04\x01\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;",
+        content_type="image/gif",
+    )
+
+    response = client.patch(
+        reverse("auth-me"),
+        {
+            "first_name": "Claire",
+            "last_name": "Patient",
+            "phone_number": "+250788123456",
+            "timezone": "Africa/Kigali",
+            "profile_picture": picture,
+        },
+        format="multipart",
+    )
+
+    assert response.status_code == 200
+    assert response.data["email"] == user.email
+    assert response.data["name"] == "Claire Patient"
+    assert response.data["role"] == user.Role.PATIENT
+    assert response.data["profile_picture_url"].endswith(".gif")
+    user.refresh_from_db()
+    assert user.profile_picture.name.startswith(f"accounts/profile-pictures/{user.id}/")
+
+
+@pytest.mark.django_db
+def test_user_can_remove_profile_picture(settings, tmp_path):
+    settings.MEDIA_ROOT = tmp_path
+    user = get_user_model().objects.create_user(
+        email="remove-picture@example.com",
+        password="MindRiseStrong123!",
+        first_name="Remove",
+    )
+    user.profile_picture.save(
+        "profile.gif",
+        SimpleUploadedFile(
+            "profile.gif",
+            b"GIF89a\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\xff\xff\xff!\xf9\x04\x01\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;",
+            content_type="image/gif",
+        ),
+    )
+    stored_path = tmp_path / user.profile_picture.name
+    client = APIClient()
+    client.force_authenticate(user=user)
+
+    response = client.patch(reverse("auth-me"), {"remove_profile_picture": True}, format="json")
+
+    assert response.status_code == 200
+    assert response.data["profile_picture_url"] == ""
+    user.refresh_from_db()
+    assert not user.profile_picture
+    assert not stored_path.exists()

@@ -641,3 +641,55 @@ def test_message_read_receipt_updates_only_when_other_participant_opens_chat():
     client.force_authenticate(user=patient)
     refreshed = client.get(reverse("support-session-messages", args=[thread.id]))
     assert refreshed.data[0]["read_at"] is not None
+
+
+@pytest.mark.django_db
+def test_approved_practitioner_can_edit_own_professional_profile():
+    user_model = get_user_model()
+    practitioner_user = user_model.objects.create_user(
+        email="edit-practitioner@example.com",
+        password="MindRiseStrong123!",
+        first_name="Aline",
+        role=user_model.Role.PRACTITIONER,
+        is_approved=True,
+    )
+    client = APIClient()
+    client.force_authenticate(user=practitioner_user)
+
+    response = client.patch(
+        reverse("practitioner-me-profile"),
+        {
+            "display_name": "Dr. Aline",
+            "specialization": "Trauma-informed care",
+            "bio": "Supporting adults through difficult transitions.",
+            "phone_number": "+250788123456",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200
+    assert response.data["display_name"] == "Dr. Aline"
+    assert response.data["specialization"] == "Trauma-informed care"
+    profile = PractitionerProfile.objects.get(user=practitioner_user)
+    assert profile.bio == "Supporting adults through difficult transitions."
+    assert profile.contact_phone == "+250788123456"
+
+
+@pytest.mark.django_db
+def test_patient_cannot_edit_practitioner_professional_profile():
+    patient = get_user_model().objects.create_user(
+        email="profile-patient-denied@example.com",
+        password="MindRiseStrong123!",
+        first_name="Patient",
+    )
+    client = APIClient()
+    client.force_authenticate(user=patient)
+
+    response = client.patch(
+        reverse("practitioner-me-profile"),
+        {"display_name": "Not a practitioner"},
+        format="json",
+    )
+
+    assert response.status_code == 403
+    assert not PractitionerProfile.objects.filter(user=patient).exists()

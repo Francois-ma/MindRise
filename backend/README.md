@@ -151,6 +151,25 @@ Admins can add practitioners in Django Admin:
 
 Saving a practitioner profile automatically marks the linked user as `practitioner`. Patients can then see online practitioners in the Support screen, start a private text thread, or use configured phone and video call options.
 
+## Supabase Profile Picture Storage
+
+Profile pictures use a dedicated Django storage alias. Local development stores them under `backend/media/accounts/profile-pictures`; production can send only profile pictures to a public Supabase Storage bucket while other MindRise uploads keep their existing storage configuration.
+
+1. In Supabase Storage, create a **public** bucket named `mindrise-profile-images`.
+2. In Supabase project settings, create S3 access keys for the backend only. Never expose the secret key to React or Flutter.
+3. Set these values on the Render API service:
+
+```env
+SUPABASE_STORAGE_ENABLED=true
+SUPABASE_URL=https://your-project-ref.supabase.co
+SUPABASE_STORAGE_BUCKET=mindrise-profile-images
+SUPABASE_STORAGE_PUBLIC_URL=https://your-project-ref.supabase.co/storage/v1/object/public/mindrise-profile-images
+SUPABASE_S3_ACCESS_KEY_ID=your-s3-access-key
+SUPABASE_S3_SECRET_ACCESS_KEY=your-s3-secret-key
+SUPABASE_S3_REGION=your-project-region
+```
+
+Supabase Storage keeps object metadata in its `storage.objects` table. MindRise stores only the randomized object path in the user record. Images are limited to 5 MB, validated as images, and replaced/removed through the authenticated `/api/v1/auth/me/` endpoint.
 ## Uploading Learning Materials
 
 Admins can upload patient education resources in Django Admin under `Learning materials`.

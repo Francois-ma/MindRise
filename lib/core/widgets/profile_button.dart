@@ -1,15 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-class ProfileButton extends StatelessWidget {
+import '../../features/auth/presentation/auth_controller.dart';
+
+class ProfileButton extends ConsumerWidget {
   const ProfileButton({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final pictureUrl =
+        ref.watch(authControllerProvider).user?.profilePictureUrl ?? '';
     return IconButton.filledTonal(
       onPressed: () => context.push('/profile'),
       tooltip: 'Profile',
-      icon: const Icon(Icons.person_rounded),
+      icon: pictureUrl.isEmpty
+          ? const Icon(Icons.person_rounded)
+          : CircleAvatar(radius: 14, backgroundImage: NetworkImage(pictureUrl)),
       style: IconButton.styleFrom(
         backgroundColor: Colors.white.withValues(alpha: .22),
         foregroundColor: Colors.white,

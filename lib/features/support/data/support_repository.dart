@@ -163,6 +163,24 @@ class SupportRepository {
     return Practitioner.fromJson(response.data ?? const {});
   }
 
+  Future<Practitioner> updateProfessionalProfile({
+    required String displayName,
+    required String specialization,
+    required String bio,
+    required String phoneNumber,
+  }) async {
+    final response = await _dio.patch<Map<String, dynamic>>(
+      '/support/practitioners/me/profile/',
+      data: {
+        'display_name': displayName.trim(),
+        'specialization': specialization.trim(),
+        'bio': bio.trim(),
+        'phone_number': phoneNumber.trim(),
+      },
+    );
+    return Practitioner.fromJson(response.data ?? const {});
+  }
+
   Future<Practitioner> updateContact({required String phoneNumber}) async {
     final response = await _dio.patch<Map<String, dynamic>>(
       '/support/practitioners/me/contact/',
@@ -431,6 +449,7 @@ class Practitioner {
     required this.displayName,
     required this.specialization,
     required this.bio,
+    required this.profilePictureUrl,
     required this.availabilityStatus,
     required this.isAvailable,
     required this.phoneNumber,
@@ -447,6 +466,7 @@ class Practitioner {
   final String displayName;
   final String specialization;
   final String bio;
+  final String profilePictureUrl;
   final PractitionerAvailabilityStatus availabilityStatus;
   final bool isAvailable;
   final String phoneNumber;
@@ -463,6 +483,7 @@ class Practitioner {
     displayName: json['display_name']?.toString() ?? '',
     specialization: json['specialization']?.toString() ?? '',
     bio: json['bio']?.toString() ?? '',
+    profilePictureUrl: json['profile_picture_url']?.toString().trim() ?? '',
     availabilityStatus: PractitionerAvailabilityStatus.fromApi(
       json['availability_status'],
     ),

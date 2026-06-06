@@ -36,6 +36,20 @@ services:
         value: true
       - key: PUBLIC_MEDIA_PREFIXES
         value: learning/materials
+      - key: SUPABASE_STORAGE_ENABLED
+        value: true
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_STORAGE_BUCKET
+        value: mindrise-profile-images
+      - key: SUPABASE_STORAGE_PUBLIC_URL
+        sync: false
+      - key: SUPABASE_S3_ACCESS_KEY_ID
+        sync: false
+      - key: SUPABASE_S3_SECRET_ACCESS_KEY
+        sync: false
+      - key: SUPABASE_S3_REGION
+        sync: false
       - key: SECURE_SSL_REDIRECT
         value: true
       - key: TRUST_PROXY_SSL_HEADER

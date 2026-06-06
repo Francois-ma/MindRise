@@ -89,7 +89,7 @@ export function SupportRequestPage() {
           {state.loading ? <WorkspaceLoading /> : state.items.length ? state.items.map((person) => (
             <article className="support-request-practitioner" key={person.id}>
               <div className="support-request-practitioner__identity">
-                <span className="support-request-avatar"><UserRound size={22} /></span>
+                <span className="support-request-avatar">{person.profile_picture_url ? <img src={person.profile_picture_url} alt="" /> : <UserRound size={22} />}</span>
                 <div><h2>{person.display_name}</h2><p>{person.specialization || 'MindRise practitioner'}</p></div>
                 <span className="support-presence support-presence--online"><Wifi size={14} />Online</span>
               </div>

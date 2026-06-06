@@ -289,21 +289,15 @@ class _LiveStatusCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Container(
-                width: 16,
-                height: 16,
-                decoration: BoxDecoration(
-                  color: isOnline ? AppColors.lime : AppColors.muted,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: (isOnline ? AppColors.lime : AppColors.muted)
-                          .withValues(alpha: .25),
-                      blurRadius: 0,
-                      spreadRadius: 7,
-                    ),
-                  ],
-                ),
+              CircleAvatar(
+                radius: 24,
+                backgroundColor: isOnline ? AppColors.emerald : AppColors.muted,
+                backgroundImage: practitioner!.profilePictureUrl.isNotEmpty
+                    ? NetworkImage(practitioner!.profilePictureUrl)
+                    : null,
+                child: practitioner!.profilePictureUrl.isEmpty
+                    ? const Icon(Icons.person_rounded, color: Colors.white)
+                    : null,
               ),
               const SizedBox(width: 16),
               Expanded(

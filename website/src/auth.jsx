@@ -83,6 +83,13 @@ export function AuthProvider({ children }) {
     };
   }, [logout]);
 
+  const updateUser = useCallback((profile) => {
+    const stored = readStoredAuth();
+    if (stored) saveStoredAuth({ ...stored, user: profile });
+    setUser(profile);
+    return profile;
+  }, []);
+
   const login = useCallback(
     async ({ email, password }) => {
       const payload = await loginAccount({ email, password });
@@ -99,10 +106,11 @@ export function AuthProvider({ children }) {
       loading,
       isAuthenticated: Boolean(session?.access && user?.is_email_verified),
       applyAuthResponse,
+      updateUser,
       login,
       logout,
     }),
-    [applyAuthResponse, loading, login, logout, session?.access, session?.refresh, user],
+    [applyAuthResponse, loading, login, logout, session?.access, session?.refresh, updateUser, user],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -108,6 +108,23 @@ export async function fetchCurrentUser(token) {
   return request('/auth/me/', { token });
 }
 
+export async function updateCurrentUser(token, payload) {
+  const form = new FormData();
+  for (const [key, value] of Object.entries({
+    first_name: payload.firstName,
+    last_name: payload.lastName,
+    phone_number: payload.phoneNumber,
+    date_of_birth: payload.dateOfBirth,
+    timezone: payload.timezone,
+  })) {
+    if (value !== undefined && value !== null) form.append(key, value);
+  }
+  if (payload.profilePicture) form.append('profile_picture', payload.profilePicture);
+  if (payload.removeProfilePicture) form.append('remove_profile_picture', 'true');
+
+  return request('/auth/me/', { token, method: 'PATCH', body: form });
+}
+
 export async function registerAccount(payload) {
   const body = {
     name: payload.name,
@@ -254,6 +271,20 @@ export async function updatePractitionerAvailability(token, payload) {
     body: JSON.stringify({
       availability_status: availabilityStatus,
       next_available_at: payload.nextAvailableAt || null,
+    }),
+  });
+}
+
+export async function updatePractitionerProfile(token, payload) {
+  return request('/support/practitioners/me/profile/', {
+    token,
+    method: 'PATCH',
+    body: JSON.stringify({
+      display_name: payload.displayName,
+      specialization: payload.specialization,
+      bio: payload.bio,
+      phone_number: payload.phoneNumber,
+      video_call_url: payload.videoCallUrl,
     }),
   });
 }

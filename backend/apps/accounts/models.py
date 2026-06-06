@@ -1,9 +1,21 @@
 import hmac
+import uuid
+from pathlib import Path
 
 from django.contrib.auth.models import AbstractUser, BaseUserManager
+from django.core.files.storage import storages
 from django.core.signing import salted_hmac
 from django.db import models
 from django.utils import timezone
+
+
+def user_profile_picture_path(instance, filename: str) -> str:
+    suffix = Path(filename).suffix.lower() or ".jpg"
+    return f"accounts/profile-pictures/{instance.pk or 'new'}/{uuid.uuid4().hex}{suffix}"
+
+
+def profile_picture_storage():
+    return storages["profile_pictures"]
 
 
 class UserManager(BaseUserManager):
@@ -51,6 +63,12 @@ class User(AbstractUser):
     last_name = models.CharField(max_length=150, blank=True)
     role = models.CharField(max_length=20, choices=Role.choices, default=Role.PATIENT)
     phone_number = models.CharField(max_length=32, blank=True)
+    profile_picture = models.ImageField(
+        upload_to=user_profile_picture_path,
+        storage=profile_picture_storage,
+        blank=True,
+        null=True,
+    )
     date_of_birth = models.DateField(null=True, blank=True)
     timezone = models.CharField(max_length=64, default="UTC")
     is_email_verified = models.BooleanField(default=False)

@@ -8,6 +8,7 @@ PRACTITIONER_APPROVAL_MESSAGE = "Your practitioner account is waiting for superu
 
 class UserSerializer(serializers.ModelSerializer):
     name = serializers.CharField(read_only=True)
+    profile_picture_url = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -19,6 +20,8 @@ class UserSerializer(serializers.ModelSerializer):
             "last_name",
             "role",
             "phone_number",
+            "date_of_birth",
+            "profile_picture_url",
             "timezone",
             "is_email_verified",
             "is_approved",
@@ -37,6 +40,12 @@ class UserSerializer(serializers.ModelSerializer):
             "created_at",
         )
 
+    def get_profile_picture_url(self, obj) -> str:
+        if not obj.profile_picture:
+            return ""
+        request = self.context.get("request")
+        return request.build_absolute_uri(obj.profile_picture.url) if request else obj.profile_picture.url
+
 
 class AuthTokenResponseMixin:
     def build_token_response(self, user):
@@ -44,7 +53,7 @@ class AuthTokenResponseMixin:
         return {
             "access": str(refresh.access_token),
             "refresh": str(refresh),
-            "user": UserSerializer(user).data,
+            "user": UserSerializer(user, context=self.context).data,
         }
 
 
@@ -132,9 +141,44 @@ class LoginSerializer(serializers.Serializer, AuthTokenResponseMixin):
 
 
 class ProfileUpdateSerializer(serializers.ModelSerializer):
+    date_of_birth = serializers.DateField(required=False, allow_null=True)
+    remove_profile_picture = serializers.BooleanField(default=False, write_only=True, required=False)
+
     class Meta:
         model = User
-        fields = ("first_name", "last_name", "phone_number", "timezone")
+        fields = (
+            "first_name",
+            "last_name",
+            "phone_number",
+            "date_of_birth",
+            "timezone",
+            "profile_picture",
+            "remove_profile_picture",
+        )
+        extra_kwargs = {"profile_picture": {"write_only": True, "required": False, "allow_null": True}}
+
+    def to_internal_value(self, data):
+        mutable_data = data.copy()
+        if mutable_data.get("date_of_birth") == "":
+            mutable_data["date_of_birth"] = None
+        return super().to_internal_value(mutable_data)
+
+    def validate_profile_picture(self, value):
+        if value and value.size > 5 * 1024 * 1024:
+            raise serializers.ValidationError("Profile pictures must be 5 MB or smaller.")
+        return value
+
+    def update(self, instance, validated_data):
+        remove_picture = validated_data.pop("remove_profile_picture", False)
+        old_picture = instance.profile_picture if instance.profile_picture else None
+        replacing_picture = "profile_picture" in validated_data
+        if remove_picture:
+            validated_data["profile_picture"] = None
+
+        user = super().update(instance, validated_data)
+        if old_picture and (remove_picture or replacing_picture):
+            old_picture.storage.delete(old_picture.name)
+        return user
 
 
 class PasswordChangeSerializer(serializers.Serializer):

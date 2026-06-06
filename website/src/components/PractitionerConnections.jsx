@@ -419,7 +419,7 @@ function PractitionerCard({ person, busyAction, onConnect }) {
   return (
     <article className="practitioner-card">
       <div className="practitioner-card__top">
-        <div className="practitioner-avatar"><UserRound size={21} aria-hidden="true" /></div>
+        <div className="practitioner-avatar">{person.profile_picture_url ? <img src={person.profile_picture_url} alt="" /> : <UserRound size={21} aria-hidden="true" />}</div>
         <span className="practitioner-online-badge"><Wifi size={14} aria-hidden="true" />Online</span>
       </div>
       <div className="practitioner-card__body">

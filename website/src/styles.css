@@ -6675,3 +6675,45 @@ textarea:focus-visible {
   font-weight: 800;
   opacity: 1;
 }
+/* Account profile editing */
+.web-profile-identity {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fff;
+  box-shadow: var(--shadow-card);
+}
+
+.web-profile-identity > div { flex: 1; min-width: 0; }
+.web-profile-identity h3, .web-profile-identity p { margin: 0; }
+.web-profile-identity p { color: var(--muted); overflow-wrap: anywhere; }
+.web-profile-identity span:not(.profile-avatar) { color: var(--brand-dark); font-size: 13px; font-weight: 700; }
+.profile-avatar {
+  display: inline-grid;
+  place-items: center;
+  width: 78px;
+  height: 78px;
+  flex: 0 0 78px;
+  overflow: hidden;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: var(--surface-green);
+  color: var(--brand-dark);
+  box-shadow: 0 0 0 1px var(--line-strong), 0 10px 24px rgba(15, 23, 42, .12);
+}
+.profile-avatar img, .practitioner-avatar img, .support-request-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.web-profile-photo-button { position: relative; overflow: hidden; }
+.web-profile-photo-button input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.web-profile-editor-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
+.web-form-split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.web-profile-editor-grid textarea { resize: vertical; min-height: 120px; }
+.practitioner-avatar, .support-request-avatar { overflow: hidden; }
+
+@media (max-width: 760px) {
+  .web-profile-identity { align-items: flex-start; flex-wrap: wrap; }
+  .web-profile-identity > div { flex-basis: calc(100% - 100px); }
+  .web-profile-editor-grid, .web-form-split { grid-template-columns: 1fr; }
+}
