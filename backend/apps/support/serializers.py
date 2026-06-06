@@ -2,7 +2,14 @@ from django.contrib.auth import get_user_model
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
-from .models import CrisisResource, PractitionerProfile, SupportMessage, SupportThread
+from .models import (
+    CallSession,
+    CrisisResource,
+    PractitionerProfile,
+    SupportMessage,
+    SupportNotification,
+    SupportThread,
+)
 
 User = get_user_model()
 
@@ -20,6 +27,7 @@ class PractitionerProfileSerializer(serializers.ModelSerializer):
             "display_name",
             "specialization",
             "bio",
+            "availability_status",
             "is_available",
             "next_available_at",
             "phone_number",
@@ -44,9 +52,22 @@ class PractitionerProfileSerializer(serializers.ModelSerializer):
 
 
 class PractitionerAvailabilitySerializer(serializers.ModelSerializer):
+    is_available = serializers.BooleanField(required=False, write_only=True)
+
     class Meta:
         model = PractitionerProfile
-        fields = ("is_available", "next_available_at")
+        fields = ("availability_status", "is_available", "next_available_at")
+
+    def validate(self, attrs):
+        status_value = attrs.get("availability_status")
+        is_available = attrs.pop("is_available", None)
+        if status_value is None and is_available is not None:
+            attrs["availability_status"] = (
+                PractitionerProfile.AvailabilityStatus.ONLINE
+                if is_available
+                else PractitionerProfile.AvailabilityStatus.OFFLINE
+            )
+        return attrs
 
 
 class SupportMessageSerializer(serializers.ModelSerializer):
@@ -63,13 +84,18 @@ class SupportThreadSerializer(serializers.ModelSerializer):
     patient_name = serializers.CharField(source="patient.name", read_only=True)
     practitioner = PractitionerProfileSerializer(read_only=True)
     practitioner_id = serializers.PrimaryKeyRelatedField(
-        queryset=PractitionerProfile.objects.filter(user__is_active=True, user__is_approved=True).select_related("user"),
+        queryset=PractitionerProfile.objects.filter(
+            user__is_active=True,
+            user__is_approved=True,
+        ).select_related("user"),
         source="practitioner",
         write_only=True,
         required=False,
         allow_null=True,
     )
     latest_message = serializers.SerializerMethodField()
+    can_message = serializers.SerializerMethodField()
+    can_call = serializers.SerializerMethodField()
 
     class Meta:
         model = SupportThread
@@ -78,16 +104,34 @@ class SupportThreadSerializer(serializers.ModelSerializer):
             "thread_type",
             "subject",
             "contact_method",
+            "status",
             "patient_id",
             "patient_name",
             "practitioner",
             "practitioner_id",
             "is_closed",
+            "can_message",
+            "can_call",
             "latest_message",
+            "requested_at",
+            "accepted_at",
+            "ended_at",
             "created_at",
             "updated_at",
         )
-        read_only_fields = ("id", "is_closed", "latest_message", "created_at", "updated_at")
+        read_only_fields = (
+            "id",
+            "status",
+            "is_closed",
+            "can_message",
+            "can_call",
+            "latest_message",
+            "requested_at",
+            "accepted_at",
+            "ended_at",
+            "created_at",
+            "updated_at",
+        )
 
     def validate(self, attrs):
         thread_type = attrs.get("thread_type")
@@ -100,8 +144,10 @@ class SupportThreadSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         user = getattr(request, "user", None)
         if getattr(user, "role", None) != User.Role.PATIENT:
-            raise serializers.ValidationError("Practitioner support can only be started by patient accounts.")
-        if not practitioner.is_available:
+            raise serializers.ValidationError("Practitioner support can only be requested by patient accounts.")
+        if not practitioner.user.is_approved or not practitioner.user.is_active:
+            raise serializers.ValidationError("This practitioner is not approved for support.")
+        if practitioner.availability_status != PractitionerProfile.AvailabilityStatus.ONLINE:
             raise serializers.ValidationError("This practitioner is not online right now.")
 
         contact_method = attrs.get("contact_method", SupportThread.ContactMethod.TEXT)
@@ -114,8 +160,17 @@ class SupportThreadSerializer(serializers.ModelSerializer):
 
     @extend_schema_field(SupportMessageSerializer)
     def get_latest_message(self, obj) -> dict | None:
+        request = self.context.get("request")
+        if request and (request.user.is_staff or request.user.is_superuser):
+            return None
         message = obj.messages.order_by("-created_at").first()
         return SupportMessageSerializer(message).data if message else None
+
+    def get_can_message(self, obj) -> bool:
+        return obj.status in {SupportThread.Status.PENDING, SupportThread.Status.ACCEPTED} and not obj.is_closed
+
+    def get_can_call(self, obj) -> bool:
+        return obj.status == SupportThread.Status.ACCEPTED and not obj.is_closed
 
     def create(self, validated_data):
         patient = self.context["request"].user
@@ -125,24 +180,36 @@ class SupportThreadSerializer(serializers.ModelSerializer):
         subject = validated_data.get("subject", "")
 
         if thread_type == SupportThread.ThreadType.PRACTITIONER and practitioner:
-            thread, created = SupportThread.objects.get_or_create(
+            session, created = SupportThread.objects.get_or_create(
                 patient=patient,
                 practitioner=practitioner,
                 thread_type=thread_type,
-                is_closed=False,
-                defaults={"subject": subject, "contact_method": contact_method},
+                status__in=(SupportThread.Status.PENDING, SupportThread.Status.ACCEPTED),
+                defaults={
+                    "subject": subject,
+                    "contact_method": contact_method,
+                    "status": SupportThread.Status.PENDING,
+                },
             )
-            if not created:
+            if created:
+                SupportNotification.objects.create(
+                    recipient=practitioner.user,
+                    session=session,
+                    notification_type=SupportNotification.Type.SUPPORT_REQUEST,
+                    title="New patient support request",
+                    body=f"{patient.name} requested private MindRise support.",
+                )
+            else:
                 update_fields = []
-                if thread.contact_method != contact_method:
-                    thread.contact_method = contact_method
+                if session.contact_method != contact_method:
+                    session.contact_method = contact_method
                     update_fields.append("contact_method")
-                if subject and thread.subject != subject:
-                    thread.subject = subject
+                if subject and session.subject != subject:
+                    session.subject = subject
                     update_fields.append("subject")
                 if update_fields:
-                    thread.save(update_fields=(*update_fields, "updated_at"))
-            return thread
+                    session.save(update_fields=(*update_fields, "updated_at"))
+            return session
 
         return SupportThread.objects.create(patient=patient, **validated_data)
 
@@ -154,6 +221,33 @@ class CreateMessageSerializer(serializers.Serializer):
         if not value:
             raise serializers.ValidationError("Message cannot be blank.")
         return value
+
+
+class CallSessionSerializer(serializers.ModelSerializer):
+    started_by_name = serializers.CharField(source="started_by.name", read_only=True)
+
+    class Meta:
+        model = CallSession
+        fields = (
+            "id",
+            "session",
+            "started_by",
+            "started_by_name",
+            "call_type",
+            "status",
+            "started_at",
+            "ended_at",
+        )
+        read_only_fields = ("id", "session", "started_by", "started_by_name", "status", "started_at", "ended_at")
+
+
+class SupportNotificationSerializer(serializers.ModelSerializer):
+    is_read = serializers.BooleanField(read_only=True)
+
+    class Meta:
+        model = SupportNotification
+        fields = ("id", "session", "notification_type", "title", "body", "is_read", "read_at", "created_at")
+        read_only_fields = fields
 
 
 class CrisisResourceSerializer(serializers.ModelSerializer):

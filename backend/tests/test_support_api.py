@@ -369,3 +369,116 @@ def test_pending_practitioner_profile_is_not_listed_for_support():
     names = {item["display_name"] for item in response.data["results"]}
     assert "Dr. Approved" in names
     assert "Dr. Pending" not in names
+@pytest.mark.django_db
+def test_support_request_requires_assigned_participants_and_creates_notifications():
+    user_model = get_user_model()
+    patient = user_model.objects.create_user(email="request-patient@example.com", password="MindRiseStrong123!", first_name="Patient")
+    other_patient = user_model.objects.create_user(email="other-patient@example.com", password="MindRiseStrong123!", first_name="Other")
+    practitioner_user = user_model.objects.create_user(
+        email="request-practitioner@example.com",
+        password="MindRiseStrong123!",
+        first_name="Practitioner",
+        role=user_model.Role.PRACTITIONER,
+        is_approved=True,
+    )
+    practitioner = PractitionerProfile.objects.create(
+        user=practitioner_user,
+        display_name="Dr. Request",
+        specialization="Support",
+        license_number="REQ-1",
+        availability_status=PractitionerProfile.AvailabilityStatus.ONLINE,
+    )
+    client = APIClient()
+    client.force_authenticate(user=patient)
+
+    response = client.post(
+        reverse("support-session-list"),
+        {"thread_type": "practitioner", "practitioner_id": practitioner.id, "contact_method": "text"},
+        format="json",
+    )
+
+    assert response.status_code == 201
+    assert response.data["status"] == "pending"
+    session_id = response.data["id"]
+    assert practitioner_user.support_notifications.filter(notification_type="support_request").exists()
+
+    client.force_authenticate(user=other_patient)
+    assert client.get(reverse("support-session-detail", args=[session_id])).status_code == 404
+    assert client.get(reverse("support-session-messages", args=[session_id])).status_code == 404
+
+    client.force_authenticate(user=practitioner_user)
+    accepted = client.post(reverse("support-session-accept", args=[session_id]), format="json")
+    assert accepted.status_code == 200
+    assert accepted.data["status"] == "accepted"
+    assert patient.support_notifications.filter(notification_type="request_accepted").exists()
+
+
+@pytest.mark.django_db
+def test_admin_can_view_session_status_but_not_private_messages():
+    user_model = get_user_model()
+    admin = user_model.objects.create_superuser(email="support-admin@example.com", password="MindRiseStrong123!")
+    patient = user_model.objects.create_user(email="private-patient@example.com", password="MindRiseStrong123!", first_name="Patient")
+    practitioner_user = user_model.objects.create_user(
+        email="private-practitioner@example.com",
+        password="MindRiseStrong123!",
+        role=user_model.Role.PRACTITIONER,
+        is_approved=True,
+    )
+    practitioner = PractitionerProfile.objects.create(
+        user=practitioner_user,
+        display_name="Dr. Private",
+        specialization="Support",
+        license_number="PRI-1",
+        availability_status=PractitionerProfile.AvailabilityStatus.ONLINE,
+    )
+    session = SupportThread.objects.create(
+        patient=patient,
+        practitioner=practitioner,
+        thread_type=SupportThread.ThreadType.PRACTITIONER,
+        status=SupportThread.Status.ACCEPTED,
+    )
+    client = APIClient()
+    client.force_authenticate(user=admin)
+
+    assert client.get(reverse("support-session-detail", args=[session.id])).status_code == 200
+    messages = client.get(reverse("support-session-messages", args=[session.id]))
+    assert messages.status_code == 403
+
+
+@pytest.mark.django_db
+def test_only_accepted_session_participants_can_manage_calls():
+    user_model = get_user_model()
+    patient = user_model.objects.create_user(email="call-patient@example.com", password="MindRiseStrong123!", first_name="Patient")
+    outsider = user_model.objects.create_user(email="call-outsider@example.com", password="MindRiseStrong123!", first_name="Outsider")
+    practitioner_user = user_model.objects.create_user(
+        email="call-practitioner@example.com",
+        password="MindRiseStrong123!",
+        role=user_model.Role.PRACTITIONER,
+        is_approved=True,
+    )
+    practitioner = PractitionerProfile.objects.create(
+        user=practitioner_user,
+        display_name="Dr. Call",
+        specialization="Support",
+        license_number="CALL-1",
+        availability_status=PractitionerProfile.AvailabilityStatus.ONLINE,
+    )
+    session = SupportThread.objects.create(
+        patient=patient,
+        practitioner=practitioner,
+        thread_type=SupportThread.ThreadType.PRACTITIONER,
+        status=SupportThread.Status.ACCEPTED,
+    )
+    client = APIClient()
+    client.force_authenticate(user=outsider)
+    assert client.post(reverse("support-call-list"), {"session": session.id, "call_type": "audio"}, format="json").status_code == 403
+
+    client.force_authenticate(user=patient)
+    created = client.post(reverse("support-call-list"), {"session": session.id, "call_type": "video"}, format="json")
+    assert created.status_code == 201
+    assert created.data["status"] == "ringing"
+
+    client.force_authenticate(user=practitioner_user)
+    accepted = client.post(reverse("support-call-accept", args=[created.data["id"]]), format="json")
+    assert accepted.status_code == 200
+    assert accepted.data["status"] == "accepted"

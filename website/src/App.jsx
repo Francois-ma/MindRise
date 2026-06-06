@@ -9,6 +9,7 @@ import { Programs } from './pages/Programs';
 import { Resources } from './pages/Resources';
 import { Start } from './pages/Start';
 import { Support } from './pages/Support';
+import { PractitionerDashboardPage, SupportChatPage, SupportRequestPage } from './pages/SupportWorkspace';
 
 function ScrollToTop() {
   const { hash, pathname, search } = useLocation();
@@ -38,6 +39,11 @@ export default function App() {
         <Route path="/programs" element={<Programs />} />
         <Route path="/resources" element={<Resources />} />
         <Route path="/support" element={<Support />} />
+        <Route path="/support/request" element={<SupportRequestPage />} />
+        <Route path="/support/chat/:sessionId" element={<SupportChatPage />} />
+        <Route path="/practitioner/dashboard" element={<PractitionerDashboardPage />} />
+        <Route path="/practitioner/pending-requests" element={<PractitionerDashboardPage pendingOnly />} />
+        <Route path="/practitioner/chat/:sessionId" element={<SupportChatPage practitionerRoute />} />
         <Route path="/start" element={<Start />} />
         <Route path="/app" element={<AppDashboard />} />
         <Route path="/contact" element={<Contact />} />

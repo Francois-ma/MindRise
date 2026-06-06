@@ -33,21 +33,19 @@ class _PractitionerHomeScreenState
     ]);
   }
 
-  Future<void> _setAvailability(bool isAvailable) async {
+  Future<void> _setAvailability(PractitionerAvailabilityStatus status) async {
     if (_isSavingAvailability) return;
     setState(() => _isSavingAvailability = true);
     try {
       await ref
           .read(supportRepositoryProvider)
-          .updateAvailability(isAvailable: isAvailable);
+          .updateAvailability(status: status);
       ref.invalidate(practitionersProvider);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              isAvailable
-                  ? 'You are online for patient support.'
-                  : 'You are offline now.',
+              'Your practitioner status is now ${status.label.toLowerCase()}.',
             ),
           ),
         );
@@ -193,7 +191,7 @@ class _LiveStatusCard extends StatelessWidget {
 
   final Practitioner? practitioner;
   final bool isSaving;
-  final ValueChanged<bool> onChanged;
+  final ValueChanged<PractitionerAvailabilityStatus> onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -215,7 +213,9 @@ class _LiveStatusCard extends StatelessWidget {
       );
     }
 
-    final isOnline = practitioner!.isAvailable;
+    final availabilityStatus = practitioner!.availabilityStatus;
+    final isOnline =
+        availabilityStatus == PractitionerAvailabilityStatus.online;
     return MRCard(
       gradient: LinearGradient(
         colors: isOnline
@@ -249,7 +249,7 @@ class _LiveStatusCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      isOnline ? 'You are online' : 'You are offline',
+                      'You are ',
                       style: theme.textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w800,
                       ),
@@ -276,28 +276,24 @@ class _LiveStatusCard extends StatelessWidget {
                 : 'Go online when you are ready to receive patient support requests.',
           ),
           const SizedBox(height: AppSpacing.lg),
-          Row(
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
             children: [
-              Expanded(
-                child: MRButton(
-                  label: 'Go online',
-                  icon: Icons.wifi_rounded,
-                  isLoading: isSaving && !isOnline,
-                  onPressed: isSaving || isOnline
+              for (final status in PractitionerAvailabilityStatus.values)
+                OutlinedButton.icon(
+                  onPressed: isSaving || availabilityStatus == status
                       ? null
-                      : () => onChanged(true),
+                      : () => onChanged(status),
+                  icon: Icon(
+                    status == PractitionerAvailabilityStatus.online
+                        ? Icons.wifi_rounded
+                        : status == PractitionerAvailabilityStatus.busy
+                        ? Icons.headset_mic_rounded
+                        : Icons.wifi_off_rounded,
+                  ),
+                  label: Text(status.label),
                 ),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: isSaving || !isOnline
-                      ? null
-                      : () => onChanged(false),
-                  icon: const Icon(Icons.schedule_rounded),
-                  label: const Text('Go offline'),
-                ),
-              ),
             ],
           ),
         ],

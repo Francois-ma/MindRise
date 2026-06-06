@@ -8,6 +8,7 @@ void main() {
       'display_name': 'Dr. Aline',
       'specialization': 'Stress and anxiety',
       'bio': 'Youth-friendly support.',
+      'availability_status': 'online',
       'is_available': true,
       'phone_number': '+250788000111',
       'video_call_url': 'https://meet.example.com/aline',
@@ -32,6 +33,9 @@ void main() {
         'contact_method': 'text',
         'patient_id': 3,
         'patient_name': 'Patient One',
+        'status': 'accepted',
+        'can_message': true,
+        'can_call': true,
         'is_closed': false,
         'updated_at': '2026-06-06T08:00:00Z',
         'practitioner': {
@@ -39,6 +43,7 @@ void main() {
           'display_name': 'Dr. Aline',
           'specialization': 'Stress and anxiety',
           'bio': '',
+          'availability_status': 'online',
           'is_available': true,
           'phone_number': '',
           'video_call_url': '',
@@ -70,6 +75,9 @@ void main() {
       'contact_method': 'video',
       'patient_id': 3,
       'patient_name': 'Patient One',
+      'status': 'pending',
+      'can_message': true,
+      'can_call': false,
       'is_closed': false,
       'updated_at': '2026-06-06T08:00:00Z',
       'practitioner': {
@@ -77,6 +85,7 @@ void main() {
         'display_name': 'Dr. Aline',
         'specialization': 'Stress and anxiety',
         'bio': '',
+        'availability_status': 'online',
         'is_available': true,
         'phone_number': '',
         'video_call_url': 'https://meet.example.com/aline',
@@ -88,5 +97,39 @@ void main() {
 
     expect(thread.displayName, 'Dr. Aline');
     expect(thread.contactMethod, SupportContactMethod.video);
+  });
+
+  test('support session parses request and call permissions', () {
+    final session = SupportThread.fromJson(const {
+      'id': 20,
+      'thread_type': 'practitioner',
+      'contact_method': 'text',
+      'status': 'pending',
+      'patient_id': 4,
+      'patient_name': 'Patient',
+      'can_message': true,
+      'can_call': false,
+      'is_closed': false,
+      'updated_at': '2026-06-06T08:00:00Z',
+    });
+
+    expect(session.status, SupportSessionStatus.pending);
+    expect(session.canMessage, isTrue);
+    expect(session.canCall, isFalse);
+  });
+
+  test('support call parses ringing state', () {
+    final call = SupportCall.fromJson(const {
+      'id': 9,
+      'session': 20,
+      'started_by': 4,
+      'started_by_name': 'Patient',
+      'call_type': 'video',
+      'status': 'ringing',
+      'started_at': '2026-06-06T08:00:00Z',
+    });
+
+    expect(call.callType, SupportCallType.video);
+    expect(call.status, 'ringing');
   });
 }

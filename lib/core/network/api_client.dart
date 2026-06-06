@@ -1,14 +1,17 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../config/app_config.dart';
+import 'auth_session_events.dart';
 import 'token_storage.dart';
 
 final dioProvider = Provider<Dio>((ref) {
   final storage = ref.watch(tokenStorageProvider);
+  final sessionEvents = ref.watch(authSessionEventsProvider);
   final dio = Dio(
     BaseOptions(
       baseUrl: AppConfig.normalizedApiBaseUrl,
@@ -28,7 +31,9 @@ final dioProvider = Provider<Dio>((ref) {
   );
 
   dio.interceptors.add(RetryInterceptor(dio: dio));
-  dio.interceptors.add(AuthInterceptor(dio: dio, storage: storage));
+  dio.interceptors.add(
+    AuthInterceptor(dio: dio, storage: storage, sessionEvents: sessionEvents),
+  );
   if (kDebugMode) {
     dio.interceptors.add(
       LogInterceptor(
@@ -107,12 +112,17 @@ class RetryInterceptor extends Interceptor {
 }
 
 class AuthInterceptor extends Interceptor {
-  AuthInterceptor({required Dio dio, required TokenStorage storage})
-    : _dio = dio,
-      _storage = storage;
+  AuthInterceptor({
+    required Dio dio,
+    required TokenStorage storage,
+    required AuthSessionEvents sessionEvents,
+  }) : _dio = dio,
+       _storage = storage,
+       _sessionEvents = sessionEvents;
 
   final Dio _dio;
   final TokenStorage _storage;
+  final AuthSessionEvents _sessionEvents;
   Completer<AuthTokens?>? _refreshCompleter;
 
   @override
@@ -121,10 +131,22 @@ class AuthInterceptor extends Interceptor {
     RequestInterceptorHandler handler,
   ) async {
     final skipAuth = options.extra['skipAuth'] == true;
+    final isProtectedRequest = !skipAuth && !_isAuthEndpoint(options.path);
     final tokens = await _storage.read();
-    if (!skipAuth && tokens != null && !_isAuthEndpoint(options.path)) {
-      options.headers['Authorization'] = 'Bearer ${tokens.accessToken}';
+    if (!isProtectedRequest || tokens == null) {
+      handler.next(options);
+      return;
     }
+
+    final activeTokens = isJwtExpiring(tokens.accessToken)
+        ? await _refreshTokens(tokens)
+        : tokens;
+    if (activeTokens == null) {
+      handler.reject(_sessionExpiredError(options));
+      return;
+    }
+
+    options.headers['Authorization'] = 'Bearer ${activeTokens.accessToken}';
     handler.next(options);
   }
 
@@ -133,11 +155,18 @@ class AuthInterceptor extends Interceptor {
     DioException err,
     ErrorInterceptorHandler handler,
   ) async {
-    final shouldRefresh =
+    final isProtectedUnauthorized =
         err.response?.statusCode == 401 &&
         !_isAuthEndpoint(err.requestOptions.path) &&
         err.requestOptions.extra['skipAuth'] != true;
+    if (isProtectedUnauthorized &&
+        err.requestOptions.extra['authRetry'] == true) {
+      await _expireSession();
+      handler.next(_sessionExpiredError(err.requestOptions));
+      return;
+    }
 
+    final shouldRefresh = isProtectedUnauthorized;
     if (!shouldRefresh) {
       handler.next(_mapError(err));
       return;
@@ -145,13 +174,14 @@ class AuthInterceptor extends Interceptor {
 
     final currentTokens = await _storage.read();
     if (currentTokens == null) {
-      handler.next(_mapError(err));
+      _sessionEvents.notifyExpired();
+      handler.next(_sessionExpiredError(err.requestOptions));
       return;
     }
 
     final refreshedTokens = await _refreshTokens(currentTokens);
     if (refreshedTokens == null) {
-      handler.next(_mapError(err));
+      handler.next(_sessionExpiredError(err.requestOptions));
       return;
     }
 
@@ -160,6 +190,7 @@ class AuthInterceptor extends Interceptor {
       retryOptions.headers['Authorization'] =
           'Bearer ${refreshedTokens.accessToken}';
       retryOptions.extra['skipAuth'] = false;
+      retryOptions.extra['authRetry'] = true;
       final response = await _dio.fetch<dynamic>(retryOptions);
       handler.resolve(response);
     } on DioException catch (error) {
@@ -188,7 +219,7 @@ class AuthInterceptor extends Interceptor {
       final access = response.data?['access']?.toString();
       final refresh = response.data?['refresh']?.toString();
       if (access == null || access.isEmpty) {
-        await _storage.clear();
+        await _expireSession();
         completer.complete(null);
         return null;
       }
@@ -203,12 +234,34 @@ class AuthInterceptor extends Interceptor {
       completer.complete(nextTokens);
       return nextTokens;
     } on Object {
-      await _storage.clear();
+      await _expireSession();
       completer.complete(null);
       return null;
     } finally {
       _refreshCompleter = null;
     }
+  }
+
+  Future<void> _expireSession() async {
+    try {
+      await _storage.clear();
+    } on Object {
+      // The router must still leave protected screens if secure storage fails.
+    } finally {
+      _sessionEvents.notifyExpired();
+    }
+  }
+
+  DioException _sessionExpiredError(RequestOptions options) {
+    return DioException(
+      requestOptions: options,
+      response: Response<dynamic>(requestOptions: options, statusCode: 401),
+      type: DioExceptionType.badResponse,
+      error: const ApiException(
+        'Your MindRise session expired. Sign in again to continue.',
+        statusCode: 401,
+      ),
+    );
   }
 
   DioException _mapError(DioException error) {
@@ -276,5 +329,27 @@ class AuthInterceptor extends Interceptor {
       DioExceptionType.badCertificate => 'Secure connection validation failed.',
       _ => error.message ?? 'Network request failed',
     };
+  }
+}
+
+bool isJwtExpiring(
+  String token, {
+  DateTime? now,
+  Duration threshold = const Duration(seconds: 30),
+}) {
+  try {
+    final segments = token.split('.');
+    if (segments.length != 3) return true;
+    final payload = jsonDecode(
+      utf8.decode(base64Url.decode(base64Url.normalize(segments[1]))),
+    );
+    if (payload is! Map<String, dynamic>) return true;
+    final expiresAt = payload['exp'];
+    if (expiresAt is! num) return true;
+    final currentSeconds =
+        (now ?? DateTime.now()).millisecondsSinceEpoch ~/ 1000;
+    return expiresAt.toInt() <= currentSeconds + threshold.inSeconds;
+  } on Object {
+    return true;
   }
 }

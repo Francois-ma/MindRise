@@ -61,31 +61,8 @@ class _SupportScreenState extends ConsumerState<SupportScreen> {
           .startPractitionerThread(practitioner, contactMethod: method);
       ref.invalidate(supportThreadsProvider);
 
-      switch (method) {
-        case SupportContactMethod.text:
-          if (mounted) {
-            context.push('/support/thread/${thread.id}', extra: thread);
-          }
-          break;
-        case SupportContactMethod.phone:
-          await _launchConnection(
-            Uri(
-              scheme: 'tel',
-              path: practitioner.phoneNumber.replaceAll(RegExp(r'\s+'), ''),
-            ),
-            fallbackMessage: 'Could not start the phone call.',
-          );
-          break;
-        case SupportContactMethod.video:
-          final uri = Uri.tryParse(practitioner.videoCallUrl);
-          if (uri == null) {
-            throw const FormatException('The video call link is invalid.');
-          }
-          await _launchConnection(
-            uri,
-            fallbackMessage: 'Could not open the video call.',
-          );
-          break;
+      if (mounted) {
+        context.push('/support/thread/${thread.id}', extra: thread);
       }
     } on Object catch (error) {
       if (mounted) {
@@ -98,34 +75,20 @@ class _SupportScreenState extends ConsumerState<SupportScreen> {
     }
   }
 
-  Future<void> _launchConnection(
-    Uri uri, {
-    required String fallbackMessage,
-  }) async {
-    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (!opened && mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(fallbackMessage)));
-    }
-  }
-
-  Future<void> _setAvailability(bool isAvailable) async {
+  Future<void> _setAvailability(PractitionerAvailabilityStatus status) async {
     if (_availabilitySaving) return;
     setState(() => _availabilitySaving = true);
     try {
       await ref
           .read(supportRepositoryProvider)
-          .updateAvailability(isAvailable: isAvailable);
+          .updateAvailability(status: status);
       ref.invalidate(practitionersProvider);
       ref.invalidate(onlinePractitionersProvider);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              isAvailable
-                  ? 'You are online for patient support.'
-                  : 'You are offline now.',
+              'Your practitioner status is now ${status.label.toLowerCase()}.',
             ),
           ),
         );
@@ -175,6 +138,21 @@ class _SupportScreenState extends ConsumerState<SupportScreen> {
                     end: Alignment.bottomRight,
                   ),
                   trailing: const ProfileButton(),
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                const MRCard(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.warning_amber_rounded, color: AppColors.rose),
+                      SizedBox(width: AppSpacing.md),
+                      Expanded(
+                        child: Text(
+                          'MindRise support is not an emergency service. If you are in immediate danger, thinking about harming yourself, or someone else may be harmed, please contact emergency services or go to the nearest hospital immediately.',
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.xl),
                 if (isPractitioner) ...[
@@ -393,7 +371,7 @@ class _AvailabilityCard extends StatelessWidget {
 
   final Practitioner? practitioner;
   final bool isSaving;
-  final ValueChanged<bool> onChanged;
+  final ValueChanged<PractitionerAvailabilityStatus> onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -406,7 +384,9 @@ class _AvailabilityCard extends StatelessWidget {
       );
     }
 
-    final isOnline = practitioner!.isAvailable;
+    final availabilityStatus = practitioner!.availabilityStatus;
+    final isOnline =
+        availabilityStatus == PractitionerAvailabilityStatus.online;
     final theme = Theme.of(context);
     return MRCard(
       gradient: LinearGradient(
@@ -438,7 +418,7 @@ class _AvailabilityCard extends StatelessWidget {
               const SizedBox(width: 14),
               Expanded(
                 child: Text(
-                  isOnline ? 'You are online' : 'You are offline',
+                  'You are ',
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
@@ -453,28 +433,24 @@ class _AvailabilityCard extends StatelessWidget {
                 : 'Go online when you are ready to receive patient support requests.',
           ),
           const SizedBox(height: AppSpacing.lg),
-          Row(
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
             children: [
-              Expanded(
-                child: MRButton(
-                  label: 'Go online',
-                  icon: Icons.wifi_rounded,
-                  isLoading: isSaving && !isOnline,
-                  onPressed: isSaving || isOnline
+              for (final status in PractitionerAvailabilityStatus.values)
+                OutlinedButton.icon(
+                  onPressed: isSaving || availabilityStatus == status
                       ? null
-                      : () => onChanged(true),
+                      : () => onChanged(status),
+                  icon: Icon(
+                    status == PractitionerAvailabilityStatus.online
+                        ? Icons.wifi_rounded
+                        : status == PractitionerAvailabilityStatus.busy
+                        ? Icons.headset_mic_rounded
+                        : Icons.wifi_off_rounded,
+                  ),
+                  label: Text(status.label),
                 ),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: isSaving || !isOnline
-                      ? null
-                      : () => onChanged(false),
-                  icon: const Icon(Icons.schedule_rounded),
-                  label: const Text('Go offline'),
-                ),
-              ),
             ],
           ),
         ],

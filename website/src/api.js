@@ -177,7 +177,7 @@ export async function fetchOnlinePractitioners(token) {
 }
 
 export async function createSupportThread(token, payload) {
-  return request('/support/threads/', {
+  return request('/support/sessions/', {
     token,
     method: 'POST',
     body: JSON.stringify({
@@ -189,28 +189,70 @@ export async function createSupportThread(token, payload) {
   });
 }
 
-export async function fetchSupportThreads(token) {
-  return request('/support/threads/?limit=50&ordering=-updated_at', { token });
+export async function fetchSupportThreads(token, filters = '') {
+  const query = filters ? `&${filters}` : '';
+  return request(`/support/sessions/?limit=50&ordering=-updated_at${query}`, { token });
 }
 
-export async function fetchSupportMessages(token, threadId) {
-  return request(`/support/threads/${threadId}/messages/`, { token });
+export async function fetchSupportSession(token, sessionId) {
+  return request(`/support/sessions/${sessionId}/`, { token });
 }
 
-export async function sendSupportMessage(token, threadId, body) {
-  return request(`/support/threads/${threadId}/messages/`, {
+export async function acceptSupportSession(token, sessionId) {
+  return request(`/support/sessions/${sessionId}/accept/`, { token, method: 'POST' });
+}
+
+export async function rejectSupportSession(token, sessionId) {
+  return request(`/support/sessions/${sessionId}/reject/`, { token, method: 'POST' });
+}
+
+export async function closeSupportSession(token, sessionId) {
+  return request(`/support/sessions/${sessionId}/close/`, { token, method: 'POST' });
+}
+
+export async function fetchSupportMessages(token, sessionId) {
+  return request(`/support/sessions/${sessionId}/messages/`, { token });
+}
+
+export async function sendSupportMessage(token, sessionId, body) {
+  return request(`/support/sessions/${sessionId}/messages/`, {
     token,
     method: 'POST',
     body: JSON.stringify({ body }),
   });
 }
 
+export async function fetchSupportNotifications(token) {
+  return request('/support/notifications/?limit=40&ordering=-created_at', { token });
+}
+
+export async function markSupportNotificationRead(token, notificationId) {
+  return request(`/support/notifications/${notificationId}/mark-read/`, { token, method: 'POST' });
+}
+
+export async function fetchSupportCalls(token, sessionId) {
+  return request(`/support/calls/?limit=20&session=${sessionId}`, { token });
+}
+
+export async function startSupportCall(token, sessionId, callType) {
+  return request('/support/calls/', {
+    token,
+    method: 'POST',
+    body: JSON.stringify({ session: sessionId, call_type: callType }),
+  });
+}
+
+export async function updateSupportCall(token, callId, action) {
+  return request(`/support/calls/${callId}/${action}/`, { token, method: 'POST' });
+}
+
 export async function updatePractitionerAvailability(token, payload) {
+  const availabilityStatus = payload.status || (payload.isAvailable ? 'online' : 'offline');
   return request('/support/practitioners/me/availability/', {
     token,
     method: 'PATCH',
     body: JSON.stringify({
-      is_available: Boolean(payload.isAvailable),
+      availability_status: availabilityStatus,
       next_available_at: payload.nextAvailableAt || null,
     }),
   });

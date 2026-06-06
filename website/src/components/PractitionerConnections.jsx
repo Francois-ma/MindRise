@@ -34,11 +34,13 @@ export function PractitionerConnectionSection() {
           <div className="practitioner-connect-state"><Loader2 className="spin" size={22} aria-hidden="true" /><p>Checking your MindRise session...</p></div>
         ) : auth.isAuthenticated && auth.user?.role === 'practitioner' ? (
           <div className="practitioner-connect-stack">
+            <div className="practitioner-workspace-link"><Link className="button button--primary" to="/practitioner/dashboard">Open practitioner workspace</Link></div>
             <PractitionerAvailabilityControl token={auth.accessToken} autoLoad />
             <SupportConversationInbox token={auth.accessToken} role={auth.user.role} userId={auth.user.id} />
           </div>
         ) : auth.isAuthenticated && auth.user?.role === 'patient' ? (
           <div className="practitioner-connect-stack">
+            <div className="practitioner-workspace-link"><Link className="button button--primary" to="/support/request">Request private support</Link></div>
             <PractitionerConnectionBoard token={auth.accessToken} autoLoad />
             <SupportConversationInbox token={auth.accessToken} role={auth.user.role} userId={auth.user.id} />
           </div>

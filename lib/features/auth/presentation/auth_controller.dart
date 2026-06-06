@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/network/auth_session_events.dart';
 import '../data/auth_repository.dart';
 
 final authControllerProvider = NotifierProvider<AuthController, AuthState>(
@@ -56,6 +57,17 @@ class AuthController extends Notifier<AuthState> {
   @override
   AuthState build() {
     _repository = ref.watch(authRepositoryProvider);
+    final sessionEvents = ref.watch(authSessionEventsProvider);
+    final subscription = sessionEvents.expired.listen((_) {
+      state = const AuthState(
+        status: AuthStatus.unauthenticated,
+        errorMessage:
+            'Your MindRise session expired. Sign in again to continue.',
+      );
+    });
+    ref.onDispose(() {
+      subscription.cancel();
+    });
     _restore();
     return const AuthState.initial();
   }
