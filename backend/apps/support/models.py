@@ -146,11 +146,15 @@ class SupportMessage(models.Model):
     )
     body = models.TextField(max_length=4000)
     is_system = models.BooleanField(default=False)
+    read_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ("created_at",)
-        indexes = [models.Index(fields=("thread", "created_at"))]
+        indexes = [
+            models.Index(fields=("thread", "created_at")),
+            models.Index(fields=("thread", "read_at", "created_at")),
+        ]
 
     def __str__(self) -> str:
         return f"{self.thread_id}:{self.sender_id}:{self.created_at:%Y-%m-%d %H:%M}"

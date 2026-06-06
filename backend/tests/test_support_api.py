@@ -562,3 +562,82 @@ def test_patient_cannot_update_practitioner_contact_options():
     )
 
     assert response.status_code == 403
+
+
+@pytest.mark.django_db
+def test_practitioner_contact_requires_international_phone_number():
+    user_model = get_user_model()
+    practitioner_user = user_model.objects.create_user(
+        email="invalid-contact-practitioner@example.com",
+        password="MindRiseStrong123!",
+        role=user_model.Role.PRACTITIONER,
+        is_approved=True,
+    )
+    PractitionerProfile.objects.create(
+        user=practitioner_user,
+        display_name="Dr. Contact",
+        specialization="Support",
+        license_number="CONTACT-2",
+    )
+    client = APIClient()
+    client.force_authenticate(user=practitioner_user)
+
+    response = client.patch(
+        reverse("practitioner-me-contact"),
+        {"phone_number": "0788123456"},
+        format="json",
+    )
+
+    assert response.status_code == 400
+    assert "country code" in str(response.data).lower()
+@pytest.mark.django_db
+def test_message_read_receipt_updates_only_when_other_participant_opens_chat():
+    user_model = get_user_model()
+    patient = user_model.objects.create_user(
+        email="receipt-patient@example.com",
+        password="MindRiseStrong123!",
+        first_name="Patient",
+    )
+    practitioner_user = user_model.objects.create_user(
+        email="receipt-practitioner@example.com",
+        password="MindRiseStrong123!",
+        first_name="Aline",
+        role=user_model.Role.PRACTITIONER,
+        is_approved=True,
+    )
+    practitioner = PractitionerProfile.objects.create(
+        user=practitioner_user,
+        display_name="Dr. Aline",
+        specialization="Support",
+        license_number="RECEIPT-1",
+        availability_status=PractitionerProfile.AvailabilityStatus.ONLINE,
+    )
+    thread = SupportThread.objects.create(
+        patient=patient,
+        practitioner=practitioner,
+        thread_type=SupportThread.ThreadType.PRACTITIONER,
+        status=SupportThread.Status.ACCEPTED,
+    )
+    client = APIClient()
+    client.force_authenticate(user=patient)
+
+    sent = client.post(
+        reverse("support-session-messages", args=[thread.id]),
+        {"body": "Can you help me?"},
+        format="json",
+    )
+    assert sent.status_code == 201
+    assert sent.data["read_at"] is None
+
+    own_view = client.get(reverse("support-session-messages", args=[thread.id]))
+    assert own_view.status_code == 200
+    assert own_view.data[0]["read_at"] is None
+
+    client.force_authenticate(user=practitioner_user)
+    practitioner_view = client.get(reverse("support-session-messages", args=[thread.id]))
+    assert practitioner_view.status_code == 200
+    assert practitioner_view.data[0]["read_at"] is not None
+
+    client.force_authenticate(user=patient)
+    refreshed = client.get(reverse("support-session-messages", args=[thread.id]))
+    assert refreshed.data[0]["read_at"] is not None

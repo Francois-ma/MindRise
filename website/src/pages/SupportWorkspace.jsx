@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import {
   Bell,
@@ -208,6 +208,7 @@ export function SupportChatPage({ practitionerRoute = false }) {
   const [state, setState] = useState({ loading: true, error: '', session: null, messages: [], calls: [] });
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState('');
+  const messageListRef = useRef(null);
 
   const load = useCallback(async () => {
     if (!auth.accessToken || !numericSessionId) return;
@@ -217,7 +218,14 @@ export function SupportChatPage({ practitionerRoute = false }) {
         fetchSupportMessages(auth.accessToken, numericSessionId),
         fetchSupportCalls(auth.accessToken, numericSessionId),
       ]);
-      setState({ loading: false, error: '', session, messages: Array.isArray(messages) ? messages : readListPayload(messages), calls: readListPayload(calls) });
+      const serverMessages = Array.isArray(messages) ? messages : readListPayload(messages);
+      setState((current) => ({
+        loading: false,
+        error: '',
+        session,
+        messages: [...serverMessages, ...current.messages.filter((message) => message.delivery_state === 'sending' || message.delivery_state === 'failed')],
+        calls: readListPayload(calls),
+      }));
     } catch (error) {
       setState((current) => ({ ...current, loading: false, error: error.message }));
     }
@@ -228,14 +236,33 @@ export function SupportChatPage({ practitionerRoute = false }) {
 
   async function send(event) {
     event.preventDefault();
-    if (!draft.trim()) return;
+    const body = draft.trim();
+    if (!body) return;
+    const temporaryId = `pending-${Date.now()}`;
+    const optimisticMessage = {
+      id: temporaryId,
+      sender: auth.user?.id,
+      sender_name: auth.user?.name || 'You',
+      body,
+      created_at: new Date().toISOString(),
+      read_at: null,
+      delivery_state: 'sending',
+    };
+    setDraft('');
     setBusy('message');
+    setState((current) => ({ ...current, error: '', messages: [...current.messages, optimisticMessage] }));
     try {
-      await sendSupportMessage(auth.accessToken, numericSessionId, draft.trim());
-      setDraft('');
-      await load();
+      const savedMessage = await sendSupportMessage(auth.accessToken, numericSessionId, body);
+      setState((current) => ({
+        ...current,
+        messages: current.messages.filter((message) => message.id !== savedMessage.id).map((message) => message.id === temporaryId ? { ...savedMessage, delivery_state: 'sent' } : message),
+      }));
     } catch (error) {
-      setState((current) => ({ ...current, error: error.message }));
+      setState((current) => ({
+        ...current,
+        error: error.message,
+        messages: current.messages.map((message) => message.id === temporaryId ? { ...message, delivery_state: 'failed' } : message),
+      }));
     } finally {
       setBusy('');
     }
@@ -276,7 +303,7 @@ export function SupportChatPage({ practitionerRoute = false }) {
 
   return (
     <Layout active={practitionerRoute ? 'app' : 'support'}>
-      <SupportWorkspaceShell eyebrow="Private support session" title={otherName || 'Loading conversation...'} subtitle={session ? `Status: ${formatStatus(session.status)}` : 'Loading assigned session.'}>
+      <SupportWorkspaceShell eyebrow="Private support session" title="MindRise" subtitle={session ? `Private chat with ${otherName || 'your assigned practitioner'} - ${formatStatus(session.status)}` : 'Loading assigned session.'}>
         <EmergencyDisclaimer />
         {state.error && <StatusMessage type="error">{state.error}</StatusMessage>}
         {state.loading ? <WorkspaceLoading /> : session ? (
@@ -295,8 +322,11 @@ export function SupportChatPage({ practitionerRoute = false }) {
               </>}
             </div>
             {(ringingCall || activeCall) && <CallBanner call={activeCall || ringingCall} currentUserId={auth.user?.id} busy={busy} onAction={callAction} />}
-            <div className="support-chat-message-list" aria-live="polite">
-              {state.messages.length ? state.messages.map((message) => <article className={Number(message.sender) === Number(auth.user?.id) ? 'is-own' : ''} key={message.id}><strong>{message.sender_name}</strong><p>{message.body}</p><span>{formatTime(message.created_at)}</span></article>) : <WorkspaceEmpty icon={MessageCircle} title="No messages yet" text="Send a private message to begin the conversation." />}
+            <div className="support-chat-message-list" aria-live="polite" ref={messageListRef}>
+              {state.messages.length ? state.messages.map((message) => {
+                const isOwn = Number(message.sender) === Number(auth.user?.id);
+                return <article className={`${isOwn ? 'is-own' : ''}${message.delivery_state === 'failed' ? ' is-failed' : ''}`} key={message.id}><strong>{isOwn ? 'You' : message.sender_name}</strong><p>{message.body}</p><footer><time>{formatTime(message.created_at)}</time>{isOwn && <span className={`support-message-receipt support-message-receipt--${message.delivery_state || (message.read_at ? 'read' : 'sent')}`}>{messageDeliveryLabel(message)}</span>}</footer></article>;
+              }) : <WorkspaceEmpty icon={MessageCircle} title="No messages yet" text="Send a private message to begin the conversation." />}
             </div>
             <form className="support-chat-composer" onSubmit={send}>
               <textarea rows={3} value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Write a private message" disabled={!session.can_message} />
@@ -358,5 +388,6 @@ function WorkspaceEmpty({ icon: Icon, title, text }) { return <div className="su
 function StatusMessage({ type, children }) { return <p className={`form-status form-status--${type}`}>{children}</p>; }
 function formatStatus(value = '') { return value ? `${value.charAt(0).toUpperCase()}${value.slice(1)}` : ''; }
 function formatTime(value) { return value ? new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }).format(new Date(value)) : ''; }
+function messageDeliveryLabel(message) { if (message.delivery_state === 'sending') return 'Sending'; if (message.delivery_state === 'failed') return 'Not sent'; return message.read_at ? 'Read' : 'Sent'; }
 function usePolling(callback, interval, enabled) { useEffect(() => { if (!enabled) return undefined; const timer = window.setInterval(() => void callback(), interval); return () => window.clearInterval(timer); }, [callback, enabled, interval]); }
 function roleGuard(auth, role) { if (auth.loading) return <WorkspaceLoading />; if (!auth.isAuthenticated) return <Navigate to="/start" replace />; if (auth.user?.role !== role) return <Navigate to={auth.user?.role === 'practitioner' ? '/practitioner/dashboard' : '/support/request'} replace />; return null; }

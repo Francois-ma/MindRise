@@ -14,12 +14,16 @@ void main() {
       'video_call_url': 'https://meet.example.com/aline',
       'can_call': true,
       'can_video_call': true,
+      'can_whatsapp': true,
+      'whatsapp_url': 'https://wa.me/250788000111',
       'is_my_profile': false,
     });
 
     expect(practitioner.isAvailable, isTrue);
     expect(practitioner.canCall, isTrue);
     expect(practitioner.canVideoCall, isTrue);
+    expect(practitioner.canWhatsApp, isTrue);
+    expect(practitioner.whatsappUrl, 'https://wa.me/250788000111');
     expect(practitioner.phoneNumber, '+250788000111');
   });
 
@@ -131,5 +135,21 @@ void main() {
 
     expect(call.callType, SupportCallType.video);
     expect(call.status, 'ringing');
+  });
+
+  test('support message parses read receipt', () {
+    final message = SupportMessage.fromJson(const {
+      'id': 11,
+      'sender': 3,
+      'sender_name': 'Patient',
+      'body': 'Thank you.',
+      'is_system': false,
+      'created_at': '2026-06-06T08:00:00Z',
+      'read_at': '2026-06-06T08:01:00Z',
+    });
+
+    expect(message.readAt, isNotNull);
+    expect(message.isPending, isFalse);
+    expect(message.hasFailed, isFalse);
   });
 }

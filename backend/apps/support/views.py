@@ -1,4 +1,5 @@
 from django.db.models import Q
+from django.utils import timezone
 from rest_framework import decorators, permissions, response, status, viewsets
 
 from .models import (
@@ -113,6 +114,7 @@ class SupportThreadViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_403_FORBIDDEN,
             )
         if request.method == "GET":
+            thread.messages.filter(read_at__isnull=True).exclude(sender=request.user).update(read_at=timezone.now())
             messages = thread.messages.select_related("sender")
             return response.Response(SupportMessageSerializer(messages, many=True).data)
 

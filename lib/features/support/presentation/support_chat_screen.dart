@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -34,8 +35,11 @@ class SupportChatScreen extends ConsumerStatefulWidget {
 
 class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
   final _messageController = TextEditingController();
+  final _scrollController = ScrollController();
   Timer? _pollTimer;
   String _busyAction = '';
+  final List<SupportMessage> _pendingMessages = [];
+  int _temporaryMessageId = -1;
 
   @override
   void initState() {
@@ -46,6 +50,7 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
   @override
   void dispose() {
     _pollTimer?.cancel();
+    _scrollController.dispose();
     _messageController.dispose();
     super.dispose();
   }
@@ -74,15 +79,68 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
     }
   }
 
+  void _scrollToLatest() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_scrollController.hasClients) return;
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 240),
+        curve: Curves.easeOut,
+      );
+    });
+  }
+
   Future<void> _send() async {
     final body = _messageController.text.trim();
-    if (body.isEmpty) return;
-    await _run('message', () async {
+    final user = ref.read(authControllerProvider).user;
+    if (body.isEmpty || user == null || _busyAction.isNotEmpty) return;
+    final pending = SupportMessage(
+      id: _temporaryMessageId--,
+      senderId: user.id,
+      senderName: user.name,
+      body: body,
+      isSystem: false,
+      createdAt: DateTime.now(),
+      isPending: true,
+    );
+    _messageController.clear();
+    setState(() {
+      _busyAction = 'message';
+      _pendingMessages.add(pending);
+    });
+    _scrollToLatest();
+    try {
       await ref
           .read(supportRepositoryProvider)
           .sendMessage(threadId: widget.threadId, body: body);
-      _messageController.clear();
-    });
+      if (mounted) {
+        setState(
+          () => _pendingMessages.removeWhere(
+            (message) => message.id == pending.id,
+          ),
+        );
+      }
+      _refresh();
+    } on Object catch (error) {
+      if (mounted) {
+        setState(() {
+          final index = _pendingMessages.indexWhere(
+            (message) => message.id == pending.id,
+          );
+          if (index >= 0) {
+            _pendingMessages[index] = pending.copyWith(
+              isPending: false,
+              hasFailed: true,
+            );
+          }
+        });
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(userMessageFromError(error))));
+      }
+    } finally {
+      if (mounted) setState(() => _busyAction = '');
+    }
   }
 
   Future<void> _sessionAction(
@@ -109,6 +167,30 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
             .updateCall(callId: call.id, action: action);
       });
 
+  Future<void> _openPractitionerContact(
+    Practitioner practitioner, {
+    required bool whatsapp,
+  }) async {
+    final uri = whatsapp
+        ? Uri.tryParse(practitioner.whatsappUrl)
+        : Uri(
+            scheme: 'tel',
+            path: practitioner.phoneNumber.replaceAll(RegExp(r'\s+'), ''),
+          );
+    final opened =
+        uri != null &&
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!opened && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '${whatsapp ? 'WhatsApp' : 'Phone call'} could not be opened on this device.',
+          ),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final session = ref.watch(supportThreadProvider(widget.threadId));
@@ -126,13 +208,18 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
               child: session.when(
                 data: (item) => _ChatHeader(
-                  title: item.displayName,
-                  status: item.status.label,
+                  title: 'MindRise',
+                  status:
+                      '${item.status.label} private chat with ${item.displayName}',
                 ),
-                loading: () =>
-                    _ChatHeader(title: widget.title, status: 'Loading'),
-                error: (error, stackTrace) =>
-                    _ChatHeader(title: widget.title, status: 'Unavailable'),
+                loading: () => const _ChatHeader(
+                  title: 'MindRise',
+                  status: 'Loading private conversation',
+                ),
+                error: (error, stackTrace) => const _ChatHeader(
+                  title: 'MindRise',
+                  status: 'Private conversation unavailable',
+                ),
               ),
             ),
             const Padding(
@@ -146,6 +233,24 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
                 isBusy: _busyAction.isNotEmpty,
                 onAccept: () => _sessionAction(true),
                 onReject: () => _sessionAction(false),
+                onPhone:
+                    !isPractitioner &&
+                        item.status == SupportSessionStatus.accepted &&
+                        item.practitioner?.canCall == true
+                    ? () => _openPractitionerContact(
+                        item.practitioner!,
+                        whatsapp: false,
+                      )
+                    : null,
+                onWhatsApp:
+                    !isPractitioner &&
+                        item.status == SupportSessionStatus.accepted &&
+                        item.practitioner?.canWhatsApp == true
+                    ? () => _openPractitionerContact(
+                        item.practitioner!,
+                        whatsapp: true,
+                      )
+                    : null,
                 onAudio: () => _startCall(SupportCallType.audio),
                 onVideo: () => _startCall(SupportCallType.video),
               ),
@@ -176,27 +281,33 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
               child: RefreshIndicator(
                 onRefresh: () async => _refresh(),
                 child: messages.when(
-                  data: (items) => items.isEmpty
-                      ? ListView(
-                          padding: const EdgeInsets.all(20),
-                          children: const [
-                            MRCard(
-                              child: Text(
-                                'No messages yet. Send a message to begin this private consultation.',
-                              ),
+                  data: (items) {
+                    final visibleMessages = [...items, ..._pendingMessages];
+                    if (visibleMessages.isEmpty) {
+                      return ListView(
+                        padding: const EdgeInsets.all(20),
+                        children: const [
+                          MRCard(
+                            child: Text(
+                              'No messages yet. Send a message to begin this private consultation.',
                             ),
-                          ],
-                        )
-                      : ListView.separated(
-                          padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-                          itemBuilder: (context, index) => _MessageBubble(
-                            message: items[index],
-                            isMine: items[index].senderId == currentUserId,
                           ),
-                          separatorBuilder: (context, index) =>
-                              const SizedBox(height: 10),
-                          itemCount: items.length,
-                        ),
+                        ],
+                      );
+                    }
+                    return ListView.separated(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+                      itemBuilder: (context, index) => _MessageBubble(
+                        message: visibleMessages[index],
+                        isMine:
+                            visibleMessages[index].senderId == currentUserId,
+                      ),
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(height: 10),
+                      itemCount: visibleMessages.length,
+                    );
+                  },
                   loading: () => ListView(
                     padding: const EdgeInsets.all(20),
                     children: const [
@@ -301,6 +412,8 @@ class _SessionControls extends StatelessWidget {
     required this.isBusy,
     required this.onAccept,
     required this.onReject,
+    required this.onPhone,
+    required this.onWhatsApp,
     required this.onAudio,
     required this.onVideo,
   });
@@ -309,6 +422,8 @@ class _SessionControls extends StatelessWidget {
   final bool isBusy;
   final VoidCallback onAccept;
   final VoidCallback onReject;
+  final VoidCallback? onPhone;
+  final VoidCallback? onWhatsApp;
   final VoidCallback onAudio;
   final VoidCallback onVideo;
 
@@ -337,16 +452,28 @@ class _SessionControls extends StatelessWidget {
               label: const Text('Reject'),
             ),
           ],
+          if (onPhone != null)
+            OutlinedButton.icon(
+              onPressed: isBusy ? null : onPhone,
+              icon: const Icon(Icons.phone_outlined),
+              label: const Text('Call practitioner'),
+            ),
+          if (onWhatsApp != null)
+            OutlinedButton.icon(
+              onPressed: isBusy ? null : onWhatsApp,
+              icon: const Icon(Icons.chat_outlined),
+              label: const Text('Open WhatsApp'),
+            ),
           if (session.canCall) ...[
             OutlinedButton.icon(
               onPressed: isBusy ? null : onAudio,
-              icon: const Icon(Icons.phone_outlined),
-              label: const Text('Start audio call'),
+              icon: const Icon(Icons.headset_mic_outlined),
+              label: const Text('MindRise audio request'),
             ),
             OutlinedButton.icon(
               onPressed: isBusy ? null : onVideo,
               icon: const Icon(Icons.videocam_outlined),
-              label: const Text('Start video call'),
+              label: const Text('MindRise video request'),
             ),
           ],
         ],
@@ -453,13 +580,53 @@ class _MessageBubble extends StatelessWidget {
                   style: TextStyle(color: textColor, height: 1.35),
                 ),
                 const SizedBox(height: 6),
-                Text(
-                  DateFormat.Hm().format(message.createdAt.toLocal()),
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: isMine
-                        ? Colors.white70
-                        : theme.colorScheme.onSurfaceVariant,
-                  ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      DateFormat.Hm().format(message.createdAt.toLocal()),
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: isMine
+                            ? Colors.white70
+                            : theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    if (isMine) ...[
+                      const SizedBox(width: 6),
+                      Icon(
+                        message.readAt != null
+                            ? Icons.done_all_rounded
+                            : Icons.done_rounded,
+                        size: 14,
+                        color: message.hasFailed
+                            ? AppColors.rose
+                            : message.readAt != null
+                            ? Colors.white
+                            : Colors.white70,
+                      ),
+                      const SizedBox(width: 3),
+                      Text(
+                        message.isPending
+                            ? 'Sending'
+                            : message.hasFailed
+                            ? 'Not sent'
+                            : message.readAt != null
+                            ? 'Read'
+                            : 'Sent',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: message.hasFailed
+                              ? AppColors.rose
+                              : message.readAt != null
+                              ? Colors.white
+                              : Colors.white70,
+                          fontWeight:
+                              message.readAt != null || message.hasFailed
+                              ? FontWeight.w700
+                              : null,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ],
             ),

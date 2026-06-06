@@ -385,13 +385,20 @@ class SupportMessage {
     required this.body,
     required this.isSystem,
     required this.createdAt,
+    this.readAt,
+    this.isPending = false,
+    this.hasFailed = false,
   });
+
   final int id;
   final int senderId;
   final String senderName;
   final String body;
   final bool isSystem;
   final DateTime createdAt;
+  final DateTime? readAt;
+  final bool isPending;
+  final bool hasFailed;
 
   factory SupportMessage.fromJson(Map<String, dynamic> json) => SupportMessage(
     id: (json['id'] as num?)?.toInt() ?? 0,
@@ -399,9 +406,22 @@ class SupportMessage {
     senderName: json['sender_name']?.toString() ?? 'MindRise',
     body: json['body']?.toString() ?? '',
     isSystem: json['is_system'] == true,
+    readAt: DateTime.tryParse(json['read_at']?.toString() ?? ''),
     createdAt:
         DateTime.tryParse(json['created_at']?.toString() ?? '') ??
         DateTime.now(),
+  );
+
+  SupportMessage copyWith({bool? isPending, bool? hasFailed}) => SupportMessage(
+    id: id,
+    senderId: senderId,
+    senderName: senderName,
+    body: body,
+    isSystem: isSystem,
+    createdAt: createdAt,
+    readAt: readAt,
+    isPending: isPending ?? this.isPending,
+    hasFailed: hasFailed ?? this.hasFailed,
   );
 }
 

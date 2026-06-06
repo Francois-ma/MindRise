@@ -62,6 +62,61 @@ class _PractitionerHomeScreenState
     }
   }
 
+  Future<void> _editContact(Practitioner practitioner) async {
+    final controller = TextEditingController(text: practitioner.phoneNumber);
+    final phoneNumber = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Call & WhatsApp number'),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.phone,
+          autofocus: true,
+          decoration: const InputDecoration(
+            labelText: 'International telephone number',
+            hintText: '+250 788 123 456',
+            prefixIcon: Icon(Icons.phone_outlined),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, controller.text.trim()),
+            child: const Text('Save number'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (phoneNumber == null || _isSavingContact) return;
+
+    setState(() => _isSavingContact = true);
+    try {
+      await ref
+          .read(supportRepositoryProvider)
+          .updateContact(phoneNumber: phoneNumber);
+      ref.invalidate(practitionersProvider);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Your Call and WhatsApp number was updated.'),
+          ),
+        );
+      }
+    } on Object catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(userMessageFromError(error))));
+      }
+    } finally {
+      if (mounted) setState(() => _isSavingContact = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(authControllerProvider).user;
@@ -95,7 +150,9 @@ class _PractitionerHomeScreenState
                   data: (items) => _LiveStatusCard(
                     practitioner: _ownProfile(items),
                     isSaving: _isSavingAvailability,
+                    isSavingContact: _isSavingContact,
                     onChanged: _setAvailability,
+                    onEditContact: _editContact,
                   ),
                   loading: () => const InlineLoadingCard(
                     message: 'Loading your live support status...',
@@ -187,12 +244,16 @@ class _LiveStatusCard extends StatelessWidget {
   const _LiveStatusCard({
     required this.practitioner,
     required this.isSaving,
+    required this.isSavingContact,
     required this.onChanged,
+    required this.onEditContact,
   });
 
   final Practitioner? practitioner;
   final bool isSaving;
+  final bool isSavingContact;
   final ValueChanged<PractitionerAvailabilityStatus> onChanged;
+  final ValueChanged<Practitioner> onEditContact;
 
   @override
   Widget build(BuildContext context) {
@@ -250,7 +311,7 @@ class _LiveStatusCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'You are ',
+                      'You are ${availabilityStatus.label.toLowerCase()}',
                       style: theme.textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w800,
                       ),
@@ -275,6 +336,32 @@ class _LiveStatusCard extends StatelessWidget {
             isOnline
                 ? 'Patients can choose you for support. Stay online only while you are ready to respond.'
                 : 'Go online when you are ready to receive patient support requests.',
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Row(
+            children: [
+              const Icon(Icons.phone_outlined, size: 19, color: AppColors.teal),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  practitioner!.phoneNumber.isEmpty
+                      ? 'No Call & WhatsApp number added'
+                      : practitioner!.phoneNumber,
+                ),
+              ),
+              TextButton.icon(
+                onPressed: isSavingContact
+                    ? null
+                    : () => onEditContact(practitioner!),
+                icon: isSavingContact
+                    ? const SizedBox.square(
+                        dimension: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.edit_outlined),
+                label: const Text('Edit'),
+              ),
+            ],
           ),
           const SizedBox(height: AppSpacing.lg),
           Wrap(

@@ -166,7 +166,12 @@ export function SupportConversationInbox({ token, role, userId }) {
       setMessages((current) => ({ ...current, loading: true, error: '' }));
       try {
         const data = await fetchSupportMessages(token, selectedThreadId);
-        setMessages({ loading: false, error: '', items: readListPayload(data).length ? readListPayload(data) : (Array.isArray(data) ? data : []) });
+        const serverMessages = readListPayload(data).length ? readListPayload(data) : (Array.isArray(data) ? data : []);
+        setMessages((current) => ({
+          loading: false,
+          error: '',
+          items: [...serverMessages, ...current.items.filter((message) => message.delivery_state === 'sending' || message.delivery_state === 'failed')],
+        }));
       } catch (error) {
         setMessages({ loading: false, error: error.message, items: [] });
       }
@@ -184,14 +189,22 @@ export function SupportConversationInbox({ token, role, userId }) {
 
   async function submitMessage(event) {
     event.preventDefault();
-    if (!selectedThreadId || !draft.trim()) return;
+    const body = draft.trim();
+    if (!selectedThreadId || !body) return;
+    const temporaryId = `pending-${Date.now()}`;
+    const optimisticMessage = { id: temporaryId, sender: userId, sender_name: 'You', body, created_at: new Date().toISOString(), read_at: null, delivery_state: 'sending' };
+    setDraft('');
     setSending(true);
+    setMessages((current) => ({ ...current, error: '', items: [...current.items, optimisticMessage] }));
     try {
-      await sendSupportMessage(token, selectedThreadId, draft.trim());
-      setDraft('');
-      await Promise.all([loadMessages(), loadThreads()]);
+      const savedMessage = await sendSupportMessage(token, selectedThreadId, body);
+      setMessages((current) => ({
+        ...current,
+        items: current.items.filter((message) => message.id !== savedMessage.id).map((message) => message.id === temporaryId ? { ...savedMessage, delivery_state: 'sent' } : message),
+      }));
+      void loadThreads();
     } catch (error) {
-      setMessages((current) => ({ ...current, error: error.message }));
+      setMessages((current) => ({ ...current, error: error.message, items: current.items.map((message) => message.id === temporaryId ? { ...message, delivery_state: 'failed' } : message) }));
     } finally {
       setSending(false);
     }
@@ -230,14 +243,14 @@ export function SupportConversationInbox({ token, role, userId }) {
             <>
               <div className="support-conversation__title">
                 <strong>{isPractitioner ? selectedThread.patient_name : selectedThread.practitioner?.display_name || 'Practitioner'}</strong>
-                <span>{formatConnectionMethod(selectedThread.contact_method)}</span>
+                <span>MindRise</span>
               </div>
               <div className="support-message-list" aria-live="polite">
                 {messages.loading ? <p>Loading messages...</p> : messages.items.length ? messages.items.map((message) => (
-                  <article className={Number(message.sender) === Number(userId) ? 'is-own' : ''} key={message.id}>
-                    <strong>{message.sender_name}</strong>
+                  <article className={`${Number(message.sender) === Number(userId) ? 'is-own' : ''}${message.delivery_state === 'failed' ? ' is-failed' : ''}`} key={message.id}>
+                    <strong>{Number(message.sender) === Number(userId) ? 'You' : message.sender_name}</strong>
                     <p>{message.body}</p>
-                    <span>{formatConversationTime(message.created_at)}</span>
+                    <span>{formatConversationTime(message.created_at)}{Number(message.sender) === Number(userId) ? ` - ${message.delivery_state === 'sending' ? 'Sending' : message.delivery_state === 'failed' ? 'Not sent' : message.read_at ? 'Read' : 'Sent'}` : ''}</span>
                   </article>
                 )) : <p>No messages in this conversation yet.</p>}
               </div>

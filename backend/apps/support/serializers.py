@@ -63,6 +63,7 @@ class PractitionerProfileSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         return bool(request and request.user.is_authenticated and obj.user_id == request.user.id)
 
+
 class PractitionerContactSerializer(serializers.ModelSerializer):
     phone_number = serializers.CharField(source="contact_phone", required=False, allow_blank=True, max_length=50)
 
@@ -72,9 +73,12 @@ class PractitionerContactSerializer(serializers.ModelSerializer):
 
     def validate_phone_number(self, value):
         digits = re.sub(r"\D", "", value)
+        if value and not value.strip().startswith("+"):
+            raise serializers.ValidationError("Include the country code, starting with +.")
         if value and not 8 <= len(digits) <= 15:
             raise serializers.ValidationError("Enter a valid international telephone number.")
         return value.strip()
+
 
 class PractitionerAvailabilitySerializer(serializers.ModelSerializer):
     is_available = serializers.BooleanField(required=False, write_only=True)
@@ -100,8 +104,8 @@ class SupportMessageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SupportMessage
-        fields = ("id", "thread", "sender", "sender_name", "body", "is_system", "created_at")
-        read_only_fields = ("id", "thread", "sender", "sender_name", "is_system", "created_at")
+        fields = ("id", "thread", "sender", "sender_name", "body", "is_system", "read_at", "created_at")
+        read_only_fields = ("id", "thread", "sender", "sender_name", "is_system", "read_at", "created_at")
 
 
 class SupportThreadSerializer(serializers.ModelSerializer):
