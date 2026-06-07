@@ -7,7 +7,7 @@ export function AboutHero() {
   return (
     <PageHero
       compact
-      image="/2.png"
+      image="/2.webp"
       imageAlt="MindRise community wellness visual"
       focal="center"
       eyebrow="About MindRise"
@@ -36,22 +36,22 @@ export function MissionSection() {
 
 const aboutShowcaseItems = [
   {
-    src: '/2.png',
-    alt: 'MindRise organization visual for community wellness',
-    label: 'Rooted work',
-    text: 'The initiative stays grounded in people, place, and practical mental health education.',
-  },
-  {
-    src: '/5.png',
+    src: '/5.webp',
     alt: 'MindRise support and listening visual',
     label: 'Listening',
     text: 'Open conversations make support feel closer and less intimidating.',
   },
   {
-    src: '/8.png',
+    src: '/8.webp',
     alt: 'MindRise digital dashboard visual',
     label: 'Digital access',
     text: 'A private web pathway supports learning, reflection, and continuity.',
+  },
+  {
+    src: '/10.webp',
+    alt: 'Young people participating in an outdoor wellness circle',
+    label: 'Youth well-being',
+    text: 'Calm group activities create space for reflection, connection, and growth.',
   },
 ];
 

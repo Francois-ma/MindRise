@@ -220,7 +220,10 @@ class SupportThreadSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         if request and (request.user.is_staff or request.user.is_superuser):
             return None
-        message = obj.messages.order_by("-created_at").first()
+        prefetched_messages = getattr(obj, "latest_messages", None)
+        message = prefetched_messages[0] if prefetched_messages else None
+        if prefetched_messages is None:
+            message = obj.messages.select_related("sender").order_by("-created_at").first()
         return SupportMessageSerializer(message).data if message else None
 
     def get_can_message(self, obj) -> bool:

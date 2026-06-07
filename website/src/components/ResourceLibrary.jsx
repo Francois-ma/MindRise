@@ -41,7 +41,7 @@ export function ResourcesHero() {
   return (
     <PageHero
       compact
-      image="/4.png"
+      image="/4.webp"
       imageAlt="MindRise learning resources visual"
       focal="center"
       eyebrow="Resources"

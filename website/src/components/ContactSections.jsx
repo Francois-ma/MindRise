@@ -26,7 +26,7 @@ export function ContactHero() {
   return (
     <PageHero
       compact
-      image="/7%20%281%29.png"
+      image="/7%20%281%29.webp"
       imageAlt="MindRise partnership and contact visual"
       focal="center"
       eyebrow="Contact"

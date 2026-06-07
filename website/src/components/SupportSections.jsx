@@ -7,7 +7,7 @@ export function SupportHero() {
   return (
     <PageHero
       compact
-      image="/5.png"
+      image="/5.webp"
       imageAlt="MindRise safe support and dialogue visual"
       focal="center"
       eyebrow="Support"
@@ -37,22 +37,16 @@ export function SupportPathways() {
 
 const supportShowcaseItems = [
   {
-    src: '/5.png',
-    alt: 'MindRise safe dialogue visual',
-    label: 'Dialogue',
-    text: 'Support visuals are quiet and reassuring, matching the sensitivity of the page.',
+    src: '/1.webp',
+    alt: 'People joining hands in community support',
+    label: 'Community support',
+    text: 'Support grows when people come together with care and shared purpose.',
   },
   {
-    src: '/6.png',
-    alt: 'MindRise digital access visual',
-    label: 'Access',
-    text: 'Digital access remains part of the pathway without overwhelming the support content.',
-  },
-  {
-    src: '/7%20%281%29.png',
-    alt: 'MindRise partnership and outreach visual',
-    label: 'Connection',
-    text: 'Contact and community pathways are kept visible, ordered, and easy to understand.',
+    src: '/3.webp',
+    alt: 'Mental health matters and you matter visual',
+    label: 'You matter',
+    text: 'Clear mental health messages help people feel seen and supported.',
   },
 ];
 

@@ -34,7 +34,7 @@ class _SupportScreenState extends ConsumerState<SupportScreen> {
   @override
   void initState() {
     super.initState();
-    _pollTimer = Timer.periodic(const Duration(seconds: 10), (_) {
+    _pollTimer = Timer.periodic(const Duration(seconds: 30), (_) {
       ref.invalidate(practitionersProvider);
       ref.invalidate(onlinePractitionersProvider);
       ref.invalidate(supportThreadsProvider);

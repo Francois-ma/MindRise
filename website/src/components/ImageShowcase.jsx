@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
+import { publicImageDimensions, responsivePublicImage } from './siteConfig';
 
-const defaultIntervalMs = 4200;
+const defaultIntervalMs = 6000;
 
 export function ImageShowcase({ eyebrow, title, items = [], className = '', intervalMs = defaultIntervalMs }) {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -18,25 +19,35 @@ export function ImageShowcase({ eyebrow, title, items = [], className = '', inte
 
   if (!itemCount) return null;
 
-  const activeItem = items[activeIndex] || items[0];
   const sectionClassName = ['section', 'image-showcase', className].filter(Boolean).join(' ');
 
   return (
     <section className={sectionClassName} aria-label={title || eyebrow || 'Image showcase'}>
-      {eyebrow && (
-        <div className="image-showcase__header">
-          <p className="eyebrow">{eyebrow}</p>
-        </div>
-      )}
-
       <div className="image-showcase__stage">
         <figure className="image-showcase__frame">
-          <img key={activeItem.src} src={activeItem.src} alt={activeItem.alt} />
-          {itemCount > 1 && (
-            <div className="image-showcase__progress" aria-hidden="true">
-              <span key={activeItem.src} style={{ '--showcase-duration': `${intervalMs}ms` }} />
-            </div>
-          )}
+          <div className="image-showcase__slides">
+            {items.map((item, index) => {
+              const [imageWidth, imageHeight] = publicImageDimensions[item.src] || [];
+              const responsiveImage = responsivePublicImage(item.src);
+              const isActive = index === activeIndex;
+
+              return (
+                <img
+                  className={isActive ? 'is-active' : ''}
+                  key={item.src}
+                  src={item.src}
+                  srcSet={responsiveImage ? `${responsiveImage} 720w, ${item.src} 1440w` : undefined}
+                  sizes="(max-width: 760px) calc(100vw - 32px), 1200px"
+                  alt={isActive ? item.alt : ''}
+                  width={imageWidth}
+                  height={imageHeight}
+                  loading="lazy"
+                  decoding="async"
+                  aria-hidden={!isActive}
+                />
+              );
+            })}
+          </div>
         </figure>
       </div>
     </section>

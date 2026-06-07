@@ -140,7 +140,7 @@ export function PractitionerDashboardPage({ pendingOnly = false }) {
   }, [auth.accessToken, pendingOnly]);
 
   useEffect(() => { void load(); }, [load]);
-  usePolling(load, 10000, Boolean(auth.accessToken));
+  usePolling(load, 20000, Boolean(auth.accessToken));
 
   async function setStatus(status) {
     setSavingStatus(status);
@@ -232,7 +232,7 @@ export function SupportChatPage({ practitionerRoute = false }) {
   }, [auth.accessToken, numericSessionId]);
 
   useEffect(() => { void load(); }, [load]);
-  usePolling(load, 5000, Boolean(auth.accessToken && numericSessionId));
+  usePolling(load, 10000, Boolean(auth.accessToken && numericSessionId));
 
   async function send(event) {
     event.preventDefault();

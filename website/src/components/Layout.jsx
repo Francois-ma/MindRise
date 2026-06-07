@@ -1,6 +1,6 @@
 import { Footer } from './Footer';
 import { Header } from './Header';
-import { logoUrl } from './siteConfig';
+import { logoUrl, publicImageDimensions, responsivePublicImage } from './siteConfig';
 
 export function Layout({ active, children }) {
   const shellClassName = ['site-shell', active ? `site-shell--${active}` : ''].filter(Boolean).join(' ');
@@ -18,6 +18,8 @@ export function Layout({ active, children }) {
 export function PageHero({ eyebrow, title, lead, children, compact = false, className = '', image = '', imageAlt = '', focal = 'center' }) {
   const heroClassName = ['page-hero', image ? 'page-hero--with-image' : '', compact ? 'page-hero--compact' : '', className].filter(Boolean).join(' ');
   const heroStyle = image ? { '--hero-focal': focal } : undefined;
+  const [imageWidth, imageHeight] = publicImageDimensions[image] || [];
+  const responsiveImage = responsivePublicImage(image);
 
   return (
     <section className={heroClassName} style={heroStyle}>
@@ -29,7 +31,7 @@ export function PageHero({ eyebrow, title, lead, children, compact = false, clas
       </div>
       {image && (
         <figure className="page-hero__media">
-          <img src={image} alt={imageAlt || `${title} visual`} loading={compact ? 'lazy' : 'eager'} decoding="async" fetchPriority={compact ? 'auto' : 'high'} />
+          <img src={image} srcSet={responsiveImage ? `${responsiveImage} 720w, ${image} 1440w` : undefined} sizes="(max-width: 980px) calc(100vw - 32px), 42vw" alt={imageAlt || `${title} visual`} width={imageWidth} height={imageHeight} loading={compact ? 'lazy' : 'eager'} decoding="async" fetchPriority={compact ? 'auto' : 'high'} />
         </figure>
       )}
     </section>

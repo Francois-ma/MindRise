@@ -113,22 +113,22 @@ const healingSteps = [
 
 const homeShowcaseItems = [
   {
-    src: '/1.png',
-    alt: 'MindRise youth mental health awareness visual',
-    label: 'Awareness',
-    text: 'Youth-friendly visuals that introduce MindRise with clarity and warmth.',
-  },
-  {
-    src: '/2.png',
+    src: '/2.webp',
     alt: 'MindRise community wellness visual',
     label: 'Community',
     text: 'A calmer view of the people and environments MindRise serves.',
   },
   {
-    src: '/7%20%281%29.png',
+    src: '/7%20%281%29.webp',
     alt: 'MindRise outreach and contact visual',
     label: 'Outreach',
     text: 'A wide image moment for partnerships, contact, and public engagement.',
+  },
+  {
+    src: '/9.webp',
+    alt: 'MindRise community gathering and open dialogue',
+    label: 'Dialogue',
+    text: 'Community conversations bring people together around mental health awareness.',
   },
 ];
 
@@ -136,7 +136,7 @@ export function HomeHero({ health }) {
   return (
     <PageHero
       className="home-hero"
-      image="/1.png"
+      image="/1.webp"
       imageAlt="MindRise awareness and youth mental health visual"
       focal="center"
       eyebrow="MindRise Wellness Initiative"

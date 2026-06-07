@@ -9,8 +9,8 @@ class AuthTokens {
 }
 
 final tokenStorageProvider = Provider<TokenStorage>((ref) {
-  return const TokenStorage(
-    FlutterSecureStorage(
+  return TokenStorage(
+    const FlutterSecureStorage(
       aOptions: AndroidOptions(
         resetOnError: true,
         migrateOnAlgorithmChange: true,
@@ -25,18 +25,44 @@ final tokenStorageProvider = Provider<TokenStorage>((ref) {
 });
 
 class TokenStorage {
-  const TokenStorage(this._storage);
+  TokenStorage(this._storage);
 
   static const _accessKey = 'mindrise.access_token';
   static const _refreshKey = 'mindrise.refresh_token';
 
   final FlutterSecureStorage _storage;
+  AuthTokens? _cachedTokens;
+  Future<AuthTokens?>? _pendingRead;
+  bool _hasReadStorage = false;
+  int _version = 0;
 
   Future<AuthTokens?> read() async {
-    final access = await _storage.read(key: _accessKey);
-    final refresh = await _storage.read(key: _refreshKey);
-    if (access == null || refresh == null) return null;
-    return AuthTokens(accessToken: access, refreshToken: refresh);
+    if (_hasReadStorage) return _cachedTokens;
+    final pendingRead = _pendingRead;
+    if (pendingRead != null) return pendingRead;
+
+    final read = _readFromStorage(_version);
+    _pendingRead = read;
+    try {
+      return await read;
+    } finally {
+      _pendingRead = null;
+    }
+  }
+
+  Future<AuthTokens?> _readFromStorage(int version) async {
+    final values = await Future.wait([
+      _storage.read(key: _accessKey),
+      _storage.read(key: _refreshKey),
+    ]);
+    if (version != _version) return _cachedTokens;
+    final access = values[0];
+    final refresh = values[1];
+    _cachedTokens = access == null || refresh == null
+        ? null
+        : AuthTokens(accessToken: access, refreshToken: refresh);
+    _hasReadStorage = true;
+    return _cachedTokens;
   }
 
   Future<void> save(AuthTokens tokens) async {
@@ -44,9 +70,15 @@ class TokenStorage {
       _storage.write(key: _accessKey, value: tokens.accessToken),
       _storage.write(key: _refreshKey, value: tokens.refreshToken),
     ]);
+    _version++;
+    _cachedTokens = tokens;
+    _hasReadStorage = true;
   }
 
   Future<void> clear() async {
+    _version++;
+    _cachedTokens = null;
+    _hasReadStorage = true;
     await Future.wait([
       _storage.delete(key: _accessKey),
       _storage.delete(key: _refreshKey),

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import {
   Activity,
@@ -65,6 +65,7 @@ export function AppDashboard() {
   const isPractitioner = auth.user?.role === 'practitioner';
   const [activeTab, setActiveTab] = useState(() => (isPractitioner ? 'practitioner-home' : 'home'));
   const [dashboard, setDashboard] = useState({ loading: true, error: '', data: null });
+  const loadSequence = useRef(0);
   const isAdminUser = Boolean(auth.user?.is_staff || auth.user?.is_superuser || auth.user?.role === 'admin');
   const visibleTabs = useMemo(() => {
     if (isPractitioner) return practitionerTabs;
@@ -74,30 +75,46 @@ export function AppDashboard() {
   const loadDashboard = useMemo(
     () => async () => {
       if (!auth.accessToken) return;
+      const sequence = ++loadSequence.current;
       setDashboard((current) => ({ ...current, loading: true, error: '' }));
       try {
-        const [summary, entries, insights, learning, practitioners, crisis] = await Promise.allSettled([
+        const [summary, entries] = await Promise.allSettled([
           fetchMoodSummary(auth.accessToken),
           fetchMoodEntries(auth.accessToken),
+        ]);
+        if (sequence !== loadSequence.current) return;
+
+        setDashboard({
+          loading: false,
+          error: firstRejectedMessage([summary, entries]),
+          data: {
+            ...defaultDashboardData,
+            summary: valueOr(summary, emptySummary),
+            entries: readListPayload(valueOr(entries, [])),
+          },
+        });
+
+        const [insights, learning, practitioners, crisis] = await Promise.allSettled([
           fetchPersonalizedInsights(auth.accessToken),
           fetchLearningContent(auth.accessToken),
           fetchPractitioners(auth.accessToken),
           fetchCrisisResources(),
         ]);
+        if (sequence !== loadSequence.current) return;
 
-        setDashboard({
-          loading: false,
-          error: firstRejectedMessage([summary, entries, insights, learning, practitioners, crisis]),
+        setDashboard((current) => ({
+          ...current,
+          error: [current.error, firstRejectedMessage([insights, learning, practitioners, crisis])].filter(Boolean).join(' '),
           data: {
-            summary: valueOr(summary, emptySummary),
-            entries: readListPayload(valueOr(entries, [])),
+            ...(current.data || defaultDashboardData),
             insights: valueOr(insights, { cards: [] }),
             learning: valueOr(learning, { categories: [], articles: [], materials: [] }),
             practitioners: readListPayload(valueOr(practitioners, [])),
             crisis: readListPayload(valueOr(crisis, [])),
           },
-        });
+        }));
       } catch (error) {
+        if (sequence !== loadSequence.current) return;
         setDashboard({ loading: false, error: error.message, data: null });
       }
     },

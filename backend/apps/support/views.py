@@ -1,4 +1,4 @@
-from django.db.models import Q
+from django.db.models import Prefetch, Q
 from django.utils import timezone
 from rest_framework import decorators, permissions, response, status, viewsets
 
@@ -117,7 +117,13 @@ class SupportThreadViewSet(viewsets.ModelViewSet):
             "practitioner",
             "practitioner__user",
             "patient",
-        ).prefetch_related("messages")
+        ).prefetch_related(
+            Prefetch(
+                "messages",
+                queryset=SupportMessage.objects.select_related("sender").order_by("-created_at")[:1],
+                to_attr="latest_messages",
+            )
+        )
         if user.is_staff or user.is_superuser:
             return queryset
         if user.role == user.Role.PRACTITIONER:

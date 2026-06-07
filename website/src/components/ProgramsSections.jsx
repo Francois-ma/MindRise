@@ -46,7 +46,7 @@ export function ProgramsHero() {
   return (
     <PageHero
       compact
-      image="/3.png"
+      image="/3.webp"
       imageAlt="MindRise outreach and program visual"
       focal="center"
       eyebrow="Programs"
@@ -71,19 +71,19 @@ export function ProgramGrid() {
 
 const programShowcaseItems = [
   {
-    src: '/3.png',
-    alt: 'MindRise program and school outreach visual',
-    label: 'Programs',
-    text: 'Program visuals are grouped around outreach, education, and community readiness.',
-  },
-  {
-    src: '/4.png',
+    src: '/4.webp',
     alt: 'MindRise learning resources visual',
     label: 'Resources',
     text: 'Learning materials are treated as practical tools for young people and schools.',
   },
   {
-    src: '/7%20%282%29.png',
+    src: '/6.webp',
+    alt: 'Young people standing together at sunrise',
+    label: 'Resilience',
+    text: 'Programs strengthen hope, resilience, and shared progress.',
+  },
+  {
+    src: '/7%20%282%29.webp',
     alt: 'MindRise community engagement visual',
     label: 'Engagement',
     text: 'Community moments are shown with restraint so the message remains clear.',

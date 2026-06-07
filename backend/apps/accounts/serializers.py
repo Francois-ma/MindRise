@@ -1,4 +1,5 @@
 from django.contrib.auth import authenticate, get_user_model, password_validation
+from PIL import Image, UnidentifiedImageError
 from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
 
@@ -166,6 +167,23 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
     def validate_profile_picture(self, value):
         if value and value.size > 5 * 1024 * 1024:
             raise serializers.ValidationError("Profile pictures must be 5 MB or smaller.")
+        if not value:
+            return value
+
+        try:
+            picture = Image.open(value)
+            width, height = picture.size
+            image_format = picture.format
+            picture.verify()
+        except (Image.DecompressionBombError, UnidentifiedImageError, OSError, ValueError):
+            raise serializers.ValidationError("Upload a valid profile image.") from None
+        finally:
+            value.seek(0)
+
+        if image_format not in {"GIF", "JPEG", "PNG", "WEBP"}:
+            raise serializers.ValidationError("Profile pictures must be GIF, JPEG, PNG, or WebP.")
+        if width * height > 16_000_000:
+            raise serializers.ValidationError("Profile pictures must be 16 megapixels or smaller.")
         return value
 
     def update(self, instance, validated_data):

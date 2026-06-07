@@ -8,7 +8,7 @@ export function StartHero() {
   return (
     <PageHero
       compact
-      image="/6.png"
+      image="/6.webp"
       imageAlt="MindRise digital account access visual"
       focal="center"
       eyebrow="Account access"

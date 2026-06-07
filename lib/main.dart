@@ -18,8 +18,11 @@ Future<void> main() async {
       WidgetsFlutterBinding.ensureInitialized();
       _configureErrorHandling();
       await _configureDeviceChrome();
-      await _configureFirebase();
+      NotificationService.registerBackgroundHandler();
       runApp(const ProviderScope(child: MindRiseApp()));
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        unawaited(_configureFirebase());
+      });
     },
     (error, stackTrace) {
       if (kDebugMode) {

@@ -44,7 +44,7 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
   @override
   void initState() {
     super.initState();
-    _pollTimer = Timer.periodic(const Duration(seconds: 5), (_) => _refresh());
+    _pollTimer = Timer.periodic(const Duration(seconds: 10), (_) => _refresh());
   }
 
   @override
