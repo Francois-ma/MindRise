@@ -37,7 +37,7 @@ export function ImageShowcase({ eyebrow, title, items = [], className = '', inte
                   key={item.src}
                   src={item.src}
                   srcSet={responsiveImage ? `${responsiveImage} 720w, ${item.src} 1440w` : undefined}
-                  sizes="(max-width: 760px) calc(100vw - 32px), 1200px"
+                  sizes="100vw"
                   alt={isActive ? item.alt : ''}
                   width={imageWidth}
                   height={imageHeight}
