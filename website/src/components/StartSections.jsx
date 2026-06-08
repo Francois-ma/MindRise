@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, Building2, Mail, ShieldCheck } from 'lucide-react';
 import { PageHero, SectionIntro } from './Layout';
 import { ValueCard } from './Cards';
-import { LoginPanel, SignupPanel } from './SignupPanel';
+import { AuthAccessPanel } from './SignupPanel';
 
 export function StartHero() {
   return (
@@ -28,8 +28,7 @@ export function StartAccountSection() {
           lead="After email verification, MindRise opens a private dashboard with mood tracking, insights, reset tools, learning resources, support pathways, and profile access."
         />
         <div className="auth-access-grid">
-          <SignupPanel />
-          <LoginPanel />
+          <AuthAccessPanel />
         </div>
       </section>
 

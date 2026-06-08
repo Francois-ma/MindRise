@@ -10,6 +10,7 @@ import {
   HeartPulse,
   Landmark,
   Loader2,
+  LogIn,
   Megaphone,
   MessageCircle,
   School,
@@ -146,6 +147,7 @@ export function HomeHero({ health }) {
       <div className="hero-actions">
         <Link className="button button--primary" to="/programs"><span>Explore our work</span><ArrowRight size={18} aria-hidden="true" /></Link>
         <Link className="button button--secondary" to="/start"><Smartphone size={18} aria-hidden="true" /><span>Create account</span></Link>
+        <Link className="button button--secondary" to="/start?mode=login"><LogIn size={18} aria-hidden="true" /><span>Sign in</span></Link>
       </div>
       <div className="hero-proof-list" aria-label="MindRise practice principles">
         <span>Evidence-informed</span>
@@ -240,6 +242,7 @@ export function MobileContinuationSection() {
           <p>The website supports official account creation, email verification, and a private dashboard. Verified users can continue MindRise on the web app or mobile app with the same account.</p>
           <div className="mobile-actions">
             <Link className="button button--primary" to="/start"><Smartphone size={18} aria-hidden="true" /><span>Create account</span></Link>
+            <Link className="button button--light" to="/start?mode=login"><LogIn size={18} aria-hidden="true" /><span>Sign in</span></Link>
             <Link className="button button--light" to="/support">Support options</Link>
           </div>
         </div>

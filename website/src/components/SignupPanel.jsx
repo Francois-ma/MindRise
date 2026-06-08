@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   CheckCircle2,
   HeartPulse,
@@ -17,7 +17,76 @@ import { logoFullUrl } from './siteConfig';
 
 const webAppReadyMessage = 'After verification, MindRise will open your private web dashboard. You can use the same account on the mobile app.';
 
-export function SignupPanel() {
+export function AuthAccessPanel() {
+  const [searchParams] = useSearchParams();
+  const [mode, setMode] = useState(() => searchParams.get('mode') === 'login' ? 'login' : 'signup');
+  const isSignup = mode === 'signup';
+
+  return (
+    <div className="auth-access-panel">
+      <aside className="auth-access__aside">
+        <img className="auth-access__logo" src={logoFullUrl} alt="MindRise Wellness Initiative logo" />
+        <div>
+          <p className="auth-access__eyebrow">MindRise account</p>
+          <h3>{isSignup ? 'Start your private wellness space.' : 'Welcome back to MindRise.'}</h3>
+          <p>
+            {isSignup
+              ? 'Create one secure account for your dashboard, support pathways, and mobile access.'
+              : 'Sign in with your verified account and continue where you left off.'}
+          </p>
+        </div>
+        <ul className="auth-access__benefits">
+          <li><CheckCircle2 size={18} aria-hidden="true" /><span>Private, verified account access</span></li>
+          <li><CheckCircle2 size={18} aria-hidden="true" /><span>One account across web and mobile</span></li>
+          <li><CheckCircle2 size={18} aria-hidden="true" /><span>Your wellness tools in one place</span></li>
+        </ul>
+        <div className="auth-access__trust">
+          <ShieldCheck size={20} aria-hidden="true" />
+          <span>Your sign-in details are used only to protect and personalize your MindRise experience.</span>
+        </div>
+      </aside>
+
+      <div className="auth-access__workspace">
+        <div className="auth-mode-switch" role="tablist" aria-label="Choose account access method">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={!isSignup}
+            className={!isSignup ? 'is-active' : ''}
+            onClick={() => setMode('login')}
+          >
+            Sign in
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={isSignup}
+            className={isSignup ? 'is-active' : ''}
+            onClick={() => setMode('signup')}
+          >
+            Create account
+          </button>
+        </div>
+
+        <div className="auth-access__heading">
+          <span>{isSignup ? 'New to MindRise' : 'Account access'}</span>
+          <h3>{isSignup ? 'Create your account' : 'Sign in to your account'}</h3>
+          <p>
+            {isSignup
+              ? 'Enter your details below. We will send a verification code to your email.'
+              : 'Enter the email and password connected to your verified MindRise account.'}
+          </p>
+        </div>
+
+        {isSignup
+          ? <SignupPanel onSwitchToLogin={() => setMode('login')} />
+          : <LoginPanel onSwitchToSignup={() => setMode('signup')} />}
+      </div>
+    </div>
+  );
+}
+
+export function SignupPanel({ onSwitchToLogin }) {
   const navigate = useNavigate();
   const { applyAuthResponse } = useAuth();
   const [form, setForm] = useState({ name: '', email: '', password: '', accepts: false });
@@ -83,66 +152,60 @@ export function SignupPanel() {
     }
   }
 
+  if (!pendingEmail && !verified) {
+    return (
+      <form className="form-card auth-form" onSubmit={submitRegistration}>
+        <Field icon={UserRound} label="Full name" value={form.name} onChange={(value) => setForm((current) => ({ ...current, name: value }))} autoComplete="name" />
+        <Field icon={Mail} label="Email address" type="email" value={form.email} onChange={(value) => setForm((current) => ({ ...current, email: value }))} autoComplete="email" />
+        <Field icon={LockKeyhole} label="Password" type="password" value={form.password} onChange={(value) => setForm((current) => ({ ...current, password: value }))} autoComplete="new-password" hint="Use at least 10 characters" />
+        <label className="checkbox-row">
+          <input type="checkbox" checked={form.accepts} onChange={(event) => setForm((current) => ({ ...current, accepts: event.target.checked }))} />
+          <span>I agree to create a MindRise account.</span>
+        </label>
+        <button className="button button--primary button--full" type="submit" disabled={!canSubmit || loading}>
+          {loading ? <Loader2 className="spin" size={18} aria-hidden="true" /> : <HeartPulse size={18} aria-hidden="true" />}
+          <span>Create account</span>
+        </button>
+        <FormStatus status={status} />
+        <p className="auth-form__footer">
+          Already have an account? <button type="button" onClick={onSwitchToLogin}>Sign in</button>
+        </p>
+      </form>
+    );
+  }
+
   return (
-    <div className="signup-panel signup-panel--single">
-      <div className="signup-panel__aside">
-        <img className="signup-panel__logo" src={logoFullUrl} alt="MindRise Wellness Initiative logo" />
-        <h3>Create a MindRise account</h3>
-        <p>Create your account, verify your email, then continue into the private MindRise web dashboard or mobile app.</p>
-        <div className="account-note">
-          <ShieldCheck size={18} aria-hidden="true" />
-          <span>Email verification keeps account access trusted across web and mobile.</span>
+    <form className="form-card auth-form auth-form--verification" onSubmit={submitVerification}>
+      <div className="verification-heading">
+        {verified ? <CheckCircle2 size={28} aria-hidden="true" /> : <Mail size={28} aria-hidden="true" />}
+        <div>
+          <h3>{verified ? 'Email verified' : 'Verify your email'}</h3>
+          <p>{verified ? 'Your account is ready.' : `Enter the six-digit code sent to ${pendingEmail}.`}</p>
         </div>
       </div>
-      {!pendingEmail && !verified ? (
-        <form className="form-card" onSubmit={submitRegistration}>
-          <Field icon={UserRound} label="Full name" value={form.name} onChange={(value) => setForm((current) => ({ ...current, name: value }))} autoComplete="name" />
-          <Field icon={Mail} label="Email address" type="email" value={form.email} onChange={(value) => setForm((current) => ({ ...current, email: value }))} autoComplete="email" />
-          <Field icon={LockKeyhole} label="Password" type="password" value={form.password} onChange={(value) => setForm((current) => ({ ...current, password: value }))} autoComplete="new-password" hint="At least 10 characters" />
-          <label className="checkbox-row">
-            <input type="checkbox" checked={form.accepts} onChange={(event) => setForm((current) => ({ ...current, accepts: event.target.checked }))} />
-            <span>I agree to create a MindRise account.</span>
-          </label>
-          <button className="button button--primary button--full" type="submit" disabled={!canSubmit || loading}>
-            {loading ? <Loader2 className="spin" size={18} aria-hidden="true" /> : <HeartPulse size={18} aria-hidden="true" />}
-            <span>Create account</span>
+      <div className="account-note">
+        <LogIn size={18} aria-hidden="true" />
+        <span>{resent ? 'Use the newest code in your inbox.' : verified ? 'Your web dashboard is opening.' : webAppReadyMessage}</span>
+      </div>
+      {!verified && (
+        <>
+          <Field icon={ShieldCheck} label="Verification code" value={code} onChange={setCode} inputMode="numeric" maxLength={6} />
+          <button className="button button--primary button--full" type="submit" disabled={code.trim().length !== 6 || loading}>
+            {loading ? <Loader2 className="spin" size={18} aria-hidden="true" /> : <CheckCircle2 size={18} aria-hidden="true" />}
+            <span>Verify and open dashboard</span>
           </button>
-          <FormStatus status={status} />
-        </form>
-      ) : (
-        <form className="form-card" onSubmit={submitVerification}>
-          <div className="verification-heading">
-            {verified ? <CheckCircle2 size={28} aria-hidden="true" /> : <Mail size={28} aria-hidden="true" />}
-            <div>
-              <h3>{verified ? 'Email verified' : 'Verify your email'}</h3>
-              <p>{verified ? 'Your account is ready.' : `Enter the six-digit code sent to ${pendingEmail}.`}</p>
-            </div>
-          </div>
-          <div className="account-note">
-            <LogIn size={18} aria-hidden="true" />
-            <span>{resent ? 'Use the newest code in your inbox.' : verified ? 'Your web dashboard is opening.' : webAppReadyMessage}</span>
-          </div>
-          {!verified && (
-            <>
-              <Field icon={ShieldCheck} label="Verification code" value={code} onChange={setCode} inputMode="numeric" maxLength={6} />
-              <button className="button button--primary button--full" type="submit" disabled={code.trim().length !== 6 || loading}>
-                {loading ? <Loader2 className="spin" size={18} aria-hidden="true" /> : <CheckCircle2 size={18} aria-hidden="true" />}
-                <span>Verify and open dashboard</span>
-              </button>
-              <button className="button button--secondary button--full" type="button" onClick={resendCode} disabled={loading || !pendingEmail}>
-                {loading ? <Loader2 className="spin" size={18} aria-hidden="true" /> : <RefreshCw size={18} aria-hidden="true" />}
-                <span>Send a new code</span>
-              </button>
-            </>
-          )}
-          <FormStatus status={status} />
-        </form>
+          <button className="button button--secondary button--full" type="button" onClick={resendCode} disabled={loading || !pendingEmail}>
+            {loading ? <Loader2 className="spin" size={18} aria-hidden="true" /> : <RefreshCw size={18} aria-hidden="true" />}
+            <span>Send a new code</span>
+          </button>
+        </>
       )}
-    </div>
+      <FormStatus status={status} />
+    </form>
   );
 }
 
-export function LoginPanel() {
+export function LoginPanel({ onSwitchToSignup }) {
   const navigate = useNavigate();
   const { login } = useAuth();
   const [form, setForm] = useState({ email: '', password: '' });
@@ -167,14 +230,7 @@ export function LoginPanel() {
   }
 
   return (
-    <form className="form-card login-panel" onSubmit={submitLogin}>
-      <div className="verification-heading">
-        <LogIn size={28} aria-hidden="true" />
-        <div>
-          <h3>Sign in to MindRise</h3>
-          <p>Use your verified account to open the same MindRise experience on the web.</p>
-        </div>
-      </div>
+    <form className="form-card auth-form login-panel" onSubmit={submitLogin}>
       <Field icon={Mail} label="Email address" type="email" value={form.email} onChange={(value) => setForm((current) => ({ ...current, email: value }))} autoComplete="email" />
       <Field icon={LockKeyhole} label="Password" type="password" value={form.password} onChange={(value) => setForm((current) => ({ ...current, password: value }))} autoComplete="current-password" />
       <button className="button button--primary button--full" type="submit" disabled={!canSubmit || loading}>
@@ -182,6 +238,9 @@ export function LoginPanel() {
         <span>Sign in and open dashboard</span>
       </button>
       <FormStatus status={status} />
+      <p className="auth-form__footer">
+        New to MindRise? <button type="button" onClick={onSwitchToSignup}>Create an account</button>
+      </p>
     </form>
   );
 }
@@ -201,5 +260,5 @@ function Field({ icon: Icon, label, type = 'text', value, onChange, hint, ...pro
 
 function FormStatus({ status }) {
   if (!status.message) return null;
-  return <p className={`form-status form-status--${status.type}`}>{status.message}</p>;
+  return <p className={`form-status form-status--${status.type}`} role="status" aria-live="polite">{status.message}</p>;
 }
